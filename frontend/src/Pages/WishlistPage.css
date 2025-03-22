@@ -1,0 +1,77 @@
+.wishlist-page {
+  min-height: calc(100vh - 60px);
+  background-color: #f8f9fa;
+  padding-bottom: 2rem;
+}
+
+.wishlist-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.wishlist-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+  background-color: #f8f9fa;
+}
+
+.btn-heart {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: none;
+  transition: transform 0.2s ease-in-out;
+}
+
+.btn-heart:hover {
+  transform: scale(1.1);
+}
+
+.modal-backdrop {
+  background-color: rgba(0,0,0,0.5);
+}
+
+/* Custom scrollbar for modal */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-img-top {
+    height: 180px;
+  }
+  
+  .btn-outline-primary {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
