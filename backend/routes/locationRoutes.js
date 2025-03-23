@@ -1,25 +1,20 @@
-const express = require('express');
-const router = express.Router();
-const { 
+const express = require("express")
+const router = express.Router()
+const {
   getNearbyProducts,
+  geocodeAddress,
+  updateUserLocation,
   searchByLocation,
-  getLocationDetails,
-  geocode,
-  updateProductLocation,
-  getPopularLocations,
-  updateUserLocation
-} = require('../controllers/Location.controller');
-const { protect } = require('../middleware/authMiddleware');
+} = require("../controllers/Location.controller")
+const { protect, optionalAuth } = require("../middleware/authMiddleware")
 
 // Public routes
-router.get('/nearby', getNearbyProducts);
-router.get('/search', searchByLocation);
-router.get('/details', getLocationDetails);
-router.post('/geocode', geocode);
-router.get('/popular', getPopularLocations);
+router.get("/nearby", getNearbyProducts)
+router.post("/geocode", geocodeAddress)
+router.get("/search", searchByLocation)
 
 // Protected routes
-router.put('/products/:id', protect, updateProductLocation);
-router.put('/user', protect, updateUserLocation);
+router.put("/user", protect, updateUserLocation)
 
-module.exports = router;
+module.exports = router
+

@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { Heart, X, Mail, Phone } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../Context/AuthContext";
+import api from "../utils/api"; // Import API functions
 
-const Wishlist = () => {
+const WishlistPage = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -14,39 +15,35 @@ const Wishlist = () => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Sample wishlist data - in a real app, this would come from an API
-  const sampleWishlistItems = [
-    {
-      id: 1,
-      title: "Lenovo LOQ Intel Core i7 13th Gen 13650HX - (24 GB/512 GB SSD)",
-      price: 90000.0,
-      condition: "Like New",
-      postedDate: "2 days ago",
-      image: "https://v0.blob.com/laptop.png",
-      description:
-        "High-performance gaming laptop with latest Intel processor, perfect for gaming and content creation.",
-      seller: {
-        name: "Rahul Kumar",
-        email: "rahul@example.com",
-        phone: "+91-9876543210",
-        rating: 4.8,
-      },
-    },
-    // Other items...
-  ];
-
+  // Fetch wishlist from API
   useEffect(() => {
-    // Simulate API call to fetch wishlist items
-    setIsLoading(true);
-    setTimeout(() => {
-      setWishlistItems(sampleWishlistItems);
-      setIsLoading(false);
-    }, 1000);
+    const fetchWishlist = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.getWishlist();
+        setWishlistItems(data);
+      } catch (error) {
+        console.error("Error fetching wishlist:", error);
+        toast.error("Failed to load wishlist.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchWishlist();
   }, []);
 
-  const handleRemoveFromWishlist = (itemId) => {
-    setWishlistItems(wishlistItems.filter((item) => item.id !== itemId));
-    toast.success("Item removed from wishlist");
+  // Remove item from wishlist (API + State)
+  const handleRemoveFromWishlist = async (item) => {
+    const itemId = item._id || item.id; // Handle both _id and id formats
+    try {
+      await api.removeFromWishlist(itemId);
+      setWishlistItems(wishlistItems.filter((i) => (i._id || i.id) !== itemId));
+      toast.success("Item removed from wishlist");
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      toast.error("Failed to remove item.");
+    }
   };
 
   const handleImageClick = (item) => {
@@ -93,13 +90,13 @@ const Wishlist = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {wishlistItems.map((item) => (
-            <div key={item.id} className="wishlist-card bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 hover:shadow-lg transition duration-300">
+            <div key={item._id || item.id} className="wishlist-card bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 hover:shadow-lg transition duration-300">
               <div className="relative h-48 cursor-pointer" onClick={() => handleImageClick(item)}>
                 <img src={item.image || "/placeholder.svg"} alt={item.title} className="w-full h-full object-cover" />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleRemoveFromWishlist(item.id);
+                    handleRemoveFromWishlist(item);
                   }}
                   className="btn-heart absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
                 >
@@ -125,55 +122,6 @@ const Wishlist = () => {
               </div>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Item Detail Modal */}
-      {selectedItem && !showContactModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="relative">
-              <button
-                onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <img
-                src={selectedItem.image || "/placeholder.svg"}
-                alt={selectedItem.title}
-                className="w-full h-64 object-cover"
-              />
-            </div>
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4">{selectedItem.title}</h2>
-              <p className="text-3xl font-bold text-blue-600 mb-4">₹{selectedItem.price.toLocaleString()}</p>
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-gray-600">{selectedItem.description}</p>
-              </div>
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Condition</h3>
-                <p className="text-gray-600">{selectedItem.condition}</p>
-              </div>
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Seller Information</h3>
-                <p className="text-gray-600">{selectedItem.seller.name}</p>
-                <div className="flex items-center mt-1">
-                  <span className="text-yellow-400">★</span>
-                  <span className="ml-1">{selectedItem.seller.rating}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setShowContactModal(true);
-                }}
-                className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
-                Contact Seller
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
@@ -228,4 +176,4 @@ const Wishlist = () => {
   );
 };
 
-export default Wishlist;
+export default WishlistPage;

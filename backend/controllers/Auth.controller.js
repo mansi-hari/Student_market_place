@@ -1,170 +1,186 @@
-const User = require("../models/User.model");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const { createError } = require("../utils/errorUtil");
-const { sendEmail } = require("../utils/emailUtil");
+const User = require('../models/User.model');
+const jwt = require('jsonwebtoken');
+const { createError } = require('../utils/errorUtil');
+const { sendEmail } = require('../utils/emailUtil');
 
 /**
  * Register a new user
+ * @route POST /api/auth/register
+ * @access Public
  */
-exports.signup = async (req, res, next) => {
+exports.register = async (req, res, next) => {
   try {
-    console.log("Signup request received:", req.body);
-
-    const { name, email, password, university, location } = req.body;
+    const { name, email, password, university } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: "User already exists" });
+      return next(createError(400, 'User with this email already exists'));
     }
-
-    // Ensure location includes pinCode
-    if (!location || !location.pinCode) {
-      return res.status(400).json({ success: false, message: "PinCode is required" });
-    }
-
-    // Hash the password before creating the user
-    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create new user
     const user = new User({
       name,
       email,
-      password: hashedPassword, // ✅ Use the hashed password
+      password,
       university,
-      location,
     });
 
     await user.save();
-    console.log("User saved successfully");
 
-    // Send welcome email
-    try {
-      const subject = "Welcome to Student Marketplace!";
-      const body = `Hello ${name},\n\nThank you for registering with Student Marketplace. We're excited to have you on board.`;
-      await sendEmail(email, subject, body);
-      console.log("Welcome email sent");
-    } catch (emailError) {
-      console.error("Error sending welcome email:", emailError);
-    }
+    // Send a welcome email
+    const subject = 'Welcome to Student Marketplace!';
+    const body = `Hello ${name},\n\nThank you for registering with Student Marketplace. We're excited to have you on board.`;
+    sendEmail(email, subject, body);
 
     // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
 
     // Return user data without password
     const { password: _, ...userData } = user.toObject();
 
-    res.status(201).json({ success: true, token, user: userData });
+    res.status(201).json({
+      success: true,
+      data: {
+        user: userData,
+        token,
+      },
+    });
   } catch (error) {
-    console.error("Signup error:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 /**
  * Login user
+ * @route POST /api/auth/login
+ * @access Public
  */
 exports.login = async (req, res, next) => {
   try {
-    console.log("Incoming login request:", req.body);
-
     const { email, password } = req.body;
 
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Please provide email and password" });
-    }
-
+    console.log(email,password)
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return next(createError(401, 'Invalid credentials'));
     }
 
     // Check if password is correct
     const isMatch = await user.comparePassword(password);
-    console.log("Password match result:", isMatch);
-
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
+      return next(createError(401, 'Invalid credentials'));
     }
 
     // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "30d" });
-
-    console.log("Login successful, token generated");
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
 
     // Return user data without password
     const { password: _, ...userData } = user.toObject();
 
-    res.status(200).json({ success: true, token, user: userData });
+    res.status(200).json({
+      success: true,
+      data: {
+        user: userData,
+        token,
+      },
+    });
   } catch (error) {
-    console.error("Error in login:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    next(error);
+  }
+};
+
+/**
+ * Get current user profile
+ * @route GET /api/auth/me
+ * @access Private
+ */
+exports.getMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+
+    if (!user) {
+      return next(createError(404, 'User not found'));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
 /**
  * Update user profile
+ * @route PUT /api/auth/me
+ * @access Private
  */
 exports.updateProfile = async (req, res, next) => {
   try {
-    const { name, university, bio, phone, profileImage, location } = req.body;
+    const { name, university, bio, phone, profileImage } = req.body;
 
-    if (location && !location.pinCode) {
-      return res.status(400).json({ success: false, message: "PinCode is required" });
-    }
-
+    // Find user and update
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      {
-        name,
-        university,
-        bio,
-        phone,
-        profileImage,
-        location: location ?? user.location, // ✅ Keep old location if not provided
-      },
-      { new: true, runValidators: true },
-    ).select("-password");
+      { name, university, bio, phone, profileImage },
+      { new: true, runValidators: true }
+    ).select('-password');
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return next(createError(404, 'User not found'));
     }
 
-    res.status(200).json({ success: true, user });
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
   } catch (error) {
-    console.error("Update profile error:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    next(error);
   }
 };
 
 /**
  * Change password
+ * @route PUT /api/auth/change-password
+ * @access Private
  */
 exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
 
+    // Find user
     const user = await User.findById(req.user.id);
+
     if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
+      return next(createError(404, 'User not found'));
     }
 
     // Check if current password is correct
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Current password is incorrect" });
+      return next(createError(401, 'Current password is incorrect'));
     }
 
-    // ✅ Hash new password before saving
-    user.password = await bcrypt.hash(newPassword, 10);
+    // Update password
+    user.password = newPassword;
     await user.save();
 
-    res.status(200).json({ success: true, message: "Password updated successfully" });
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully',
+    });
   } catch (error) {
-    console.error("Change password error:", error);
-    res.status(500).json({ success: false, message: "Server error", error: error.message });
+    next(error);
   }
 };

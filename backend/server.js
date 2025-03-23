@@ -2,9 +2,8 @@ const dotenv = require('dotenv').config({ path: './.env' });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
 const http = require('http');
-// const { Server } = require('socket.io');
+const { Server } = require('socket.io');
 const mongoURI = process.env.MONGODB_URI;
 const PORT = process.env.PORT || 5000;
 
@@ -37,43 +36,18 @@ mongoose.connect(mongoURI)
   .catch((err) => console.log("MongoDB connection error:", err));
 
 // ✅ Define Static Data for States and Cities
-// const statesAndCities = {
-//   Maharashtra: ["Mumbai", "Pune", "Nagpur"],
-//   Karnataka: ["Bangalore", "Mysore"],
-//   Delhi: ["New Delhi"],
-// };
+const statesAndCities = {
+  Maharashtra: ["Mumbai", "Pune", "Nagpur"],
+  Karnataka: ["Bangalore", "Mysore"],
+  Delhi: ["New Delhi"],
+};
 
-// // ✅ Get all states and cities
-// app.get("/api/states", (req, res) => {
-//   res.json(statesAndCities);
-// });
-
-// ✅ Get all products with filters
-// Product Schema (Make sure it matches your imported data structure)
-const Product = mongoose.model("Product", new mongoose.Schema({
-  title: String,
-  price: Number,
-  description: String,
-  category: String,
-  seller: String,
-  image: String,
-  datePosted: Date,
-  isSold: Boolean,
-  isAvailable: Boolean,
-  views: Number,
-  location: String,
-}));
-
-// API Endpoint to Fetch Products by Category
-app.get("/api/products/:category", async (req, res) => {
-  try {
-    const products = await Product.find({ category: req.params.category, isAvailable: true }).limit(10);
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching products", error });
-  }
+// ✅ Get all states and cities
+app.get("/api/states", (req, res) => {
+  res.json(statesAndCities);
 });
 
+// ✅ Get all products with filters
 app.get("/api/products", async (req, res) => {
   const { state, city, sort } = req.query;
   let filter = {};
@@ -121,32 +95,30 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/location", locationRoutes);
 
-
-
 // ✅ Error Handling Middleware
 app.use(errorHandler);
 
 // ✅ Socket.IO Setup
-// const server = http.createServer(app);
-// const io = new Server(server);
+const server = http.createServer(app);
+const io = new Server(server);
 
-// io.on('connection', (socket) => {
-//   console.log('A user connected');
-//   socket.on('join_room', (roomId) => {
-//     socket.join(roomId);
-//     console.log(`User joined room: ${roomId}`);
-//   });
+io.on('connection', (socket) => {
+  console.log('A user connected');
+  socket.on('join_room', (roomId) => {
+    socket.join(roomId);
+    console.log(`User joined room: ${roomId}`);
+  });
 
-//   socket.on('send_message', (data) => {
-//     // Handle the message and emit it to the room
-//     io.to(data.conversationId).emit('receive_message', data);
-//   });
+  socket.on('send_message', (data) => {
+    // Handle the message and emit it to the room
+    io.to(data.conversationId).emit('receive_message', data);
+  });
 
-//   socket.on('typing', (data) => {
-//     socket.to(data.conversationId).emit('user_typing', data);
-//   });
+  socket.on('typing', (data) => {
+    socket.to(data.conversationId).emit('user_typing', data);
+  });
 
-// });
+});
 
 // ✅ Start Server
 server.listen(PORT, () => {

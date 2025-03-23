@@ -1,12 +1,13 @@
 import React, { useState } from "react";
-import axios from 'axios';
+import axios from "axios";
 
 import "./SellPage.css"; // Ensure you have this CSS file for styling
 
-const ListItemForm = () => {
+const SellPage = () => {
   const [formData, setFormData] = useState({
     title: "",
     category: "",
+    otherCategory: "", // Added for "Others" input
     price: "",
     description: "",
     condition: "New",
@@ -18,10 +19,10 @@ const ListItemForm = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === "checkbox" ? checked : value,
-    });
+    }));
   };
 
   const handlePhotoUpload = (e) => {
@@ -30,39 +31,69 @@ const ListItemForm = () => {
       alert("You can upload a maximum of 5 photos.");
       return;
     }
-    setFormData({ ...formData, photos: [...formData.photos, ...files] });
+    setFormData((prev) => ({
+      ...prev,
+      photos: [...prev.photos, ...files],
+    }));
   };
 
   const removePhoto = (index) => {
-    setFormData({
-      ...formData,
-      photos: formData.photos.filter((_, i) => i !== index),
-    });
+    setFormData((prev) => ({
+      ...prev,
+      photos: prev.photos.filter((_, i) => i !== index),
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    try {
-        const response = await axios.post('http://localhost:5000/api/items', formData);
-        console.log("Listing Item:", response.data);
-        alert("Item listed successfully!");
 
-        // Clear form fields after submission
-        setFormData({
-          title: "",
-          category: "",
-          price: "",
-          description: "",
-          condition: "New",
-          tags: "",
-          photos: [],
-          location: "",
-          negotiable: false,
-        });
+    const submissionData = new FormData();
+    submissionData.append("title", formData.title);
+    submissionData.append(
+      "category",
+      formData.category === "Others" ? formData.otherCategory : formData.category
+    );
+    submissionData.append("price", formData.price);
+    submissionData.append("description", formData.description);
+    submissionData.append("condition", formData.condition);
+    submissionData.append("tags", formData.tags);
+    submissionData.append("location", formData.location);
+    submissionData.append("negotiable", formData.negotiable);
+
+    formData.photos.forEach((photo) => {
+      submissionData.append("photos", photo);
+    });
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/products",
+        submissionData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Listing Item:", response.data);
+      alert("Item listed successfully!");
+
+      // Clear form fields after submission
+      setFormData({
+        title: "",
+        category: "",
+        otherCategory: "",
+        price: "",
+        description: "",
+        condition: "New",
+        tags: "",
+        photos: [],
+        location: "",
+        negotiable: false,
+      });
     } catch (error) {
-        console.error("Error listing item:", error);
-        alert("There was an error listing the item. Please try again.");
+      console.error("Error listing item:", error);
+      alert("There was an error listing the item. Please try again.");
     }
   };
 
@@ -84,7 +115,12 @@ const ListItemForm = () => {
 
         <div className="sell-field">
           <label>Category</label>
-          <select name="category" value={formData.category} onChange={handleChange} required>
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            required
+          >
             <option value="">Select a category</option>
             <option value="Electronics">Electronics</option>
             <option value="Furniture">Furniture</option>
@@ -92,14 +128,21 @@ const ListItemForm = () => {
             <option value="Transport">Transport</option>
             <option value="Supplies">Supplies</option>
             <option value="Others">Others</option>
-
           </select>
         </div>
-         {/* Show input field if 'Others' is selected */}
-         {formData.category === "Others" && (
+
+        {/* Show input field if 'Others' is selected */}
+        {formData.category === "Others" && (
           <div className="sell-field">
             <label>Enter Category Name</label>
-            <input type="text" name="otherCategory" placeholder="Enter category name" value={formData.otherCategory} onChange={handleChange} required />
+            <input
+              type="text"
+              name="otherCategory"
+              placeholder="Enter category name"
+              value={formData.otherCategory}
+              onChange={handleChange}
+              required
+            />
           </div>
         )}
 
@@ -128,7 +171,12 @@ const ListItemForm = () => {
 
         <div className="sell-field">
           <label>Description</label>
-          <textarea name="description" value={formData.description} onChange={handleChange} required></textarea>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+          ></textarea>
         </div>
 
         <div className="sell-field">
@@ -138,7 +186,11 @@ const ListItemForm = () => {
             {formData.photos.map((photo, index) => (
               <div key={index} className="photo-container">
                 <img src={URL.createObjectURL(photo)} alt="preview" />
-                <button type="button" className="remove-photo" onClick={() => removePhoto(index)}>
+                <button
+                  type="button"
+                  className="remove-photo"
+                  onClick={() => removePhoto(index)}
+                >
                   &times;
                 </button>
               </div>
@@ -151,7 +203,13 @@ const ListItemForm = () => {
           <div>
             {["New", "Like New", "Good", "Fair"].map((cond) => (
               <label key={cond} className="condition-option">
-                <input type="radio" name="condition" value={cond} checked={formData.condition === cond} onChange={handleChange} />
+                <input
+                  type="radio"
+                  name="condition"
+                  value={cond}
+                  checked={formData.condition === cond}
+                  onChange={handleChange}
+                />
                 {cond}
               </label>
             ))}
@@ -160,12 +218,23 @@ const ListItemForm = () => {
 
         <div className="sell-field">
           <label>Tags</label>
-          <input type="text" name="tags" placeholder="Add tags separated by commas" value={formData.tags} onChange={handleChange} />
+          <input
+            type="text"
+            name="tags"
+            placeholder="Add tags separated by commas"
+            value={formData.tags}
+            onChange={handleChange}
+          />
         </div>
 
         <div className="sell-field negotiable-field">
           <label>
-            <input type="checkbox" name="negotiable" checked={formData.negotiable} onChange={handleChange} />
+            <input
+              type="checkbox"
+              name="negotiable"
+              checked={formData.negotiable}
+              onChange={handleChange}
+            />
             Price Negotiable
           </label>
         </div>
@@ -180,4 +249,4 @@ const ListItemForm = () => {
   );
 };
 
-export default ListItemForm;
+export default SellPage;

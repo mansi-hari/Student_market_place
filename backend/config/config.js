@@ -11,5 +11,6 @@ module.exports = {
   emailUser: process.env.EMAIL_USER,
   emailPass: process.env.EMAIL_PASS,
   frontendURL: process.env.FRONTEND_URL || 'http://localhost:3000',
-  
+  GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY || "AIzaSyCwHnmKtoWdibHc8nf-W_wcBTG3CAdFpwA",
+
 };

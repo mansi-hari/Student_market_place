@@ -49,7 +49,7 @@ const Login = () => {
         initializeSocket(token)
 
         toast.success("Login successful!")
-        navigate("/HomePage")
+        navigate("/Home")
       } else {
         setError(response.data.message || "Login failed")
       }
