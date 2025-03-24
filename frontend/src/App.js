@@ -1,5 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { initializeSocket } from './utils/socket'; 
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -12,20 +12,20 @@ import Login from './Pages/Login';
 import Signup from './Pages/Signup';
 import HomePage from './Pages/HomePage';
 import Browse from './Pages/Browse';
-import SellPage from './Pages/SellPage.jsx';
-import WishlistPage from './Pages/WishlistPage.jsx';
+import SellPage from './Pages/SellPage';
+import WishlistPage from './Pages/WishlistPage';
 import CategoryPage from './Pages/CategoryPage';
-// import ProductDetail from './Pages/ProductDetail';
+import ProductDetail from './Pages/ProductDetail';
 import ForgotPassword from './Pages/ForgotPassword';
 import Dashboard from './Pages/Dashboard';
+import Footer from './Components/Footer/Footer';
+import ChatPage from './Pages/ChatComponent';  // Import Chat Page
 import './App.css';
 
-import { useEffect } from 'react';
-
 function App() {
-  const token = localStorage.getItem('token'); // Assuming token is stored in localStorage
+  const token = localStorage.getItem('token'); // Get token from localStorage
   
-  // Initialize socket connection only once
+  // Initialize socket connection if user is logged in
   useEffect(() => {
     if (token) {
       initializeSocket(token);
@@ -45,16 +45,17 @@ function App() {
 
 const AppContent = () => {
   const location = useLocation();
+  if (!location) return null;
 
   return (
     <div>
       {/* Toaster for notifications */}
       <Toaster position="top-right" />
 
-      {/* Navbar stays at the top */}
+      {/* Navbar remains fixed at the top */}
       <Navbar />
 
-      {/* Hero Section only shown on HomePage */}
+      {/* Hero Section only appears on the HomePage */}
       {location.pathname === '/' && <Hero />}
 
       {/* Routing Section */}
@@ -62,8 +63,12 @@ const AppContent = () => {
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<Browse />} />
+        <Route path="/browse/:category" element={<Browse />} />
         <Route path="/products/:category" element={<CategoryPage />} />
-        {/* <Route path="/products/:category/:id" element={<ProductDetail />} /> */}
+        <Route path="/product/:id" element={<ProductDetail />} />  {/* Fixed Route for Product Details */}
+        
+        {/* Chat Page Route */}
+        <Route path="/chat/:sellerId" element={<ChatPage />} />
 
         {/* Auth Routes */}
         <Route path="/auth/login" element={<Login isSignup={false} />} />
@@ -71,35 +76,15 @@ const AppContent = () => {
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected Routes */}
-        <Route
-          path="/sell"
-          element={
-            <ProtectedRoute>
-              <SellPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/wishlist"
-          element={
-            <ProtectedRoute>
-              <WishlistPage />
-            </ProtectedRoute>
-          }
-        />
-        
-        {/* Add the Dashboard route as a protected route */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       </Routes>
 
+      {/* Footer remains at the bottom */}
+      <Footer />
     </div>
   );
 };
+
 export default App;

@@ -2,6 +2,7 @@ const User = require('../models/User.model');
 const jwt = require('jsonwebtoken');
 const { createError } = require('../utils/errorUtil');
 const { sendEmail } = require('../utils/emailUtil');
+const bcrypt = require("bcryptjs");
 
 /**
  * Register a new user

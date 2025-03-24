@@ -1,3 +1,74 @@
+
+/* Add or update these styles in your Navbar.css file */
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-logo img {
+  height: 40px;
+  width: auto;
+}
+
+.nav-logo p {
+  font-weight: bold;
+  font-size: 18px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.navbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Make sure the search bar has enough space */
+.search-bar-container {
+  flex: 1;
+  max-width: 600px;
+  margin: 0 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .nav-logo {
+    flex-wrap: wrap;
+  }
+
+  .search-bar-container {
+    margin: 0 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-top {
+    flex-wrap: wrap;
+  }
+
+  .nav-logo {
+    width: 100%;
+    margin-bottom: 10px;
+    justify-content: space-between;
+  }
+
+  .search-bar-container {
+    flex: 1;
+    max-width: 100%;
+    margin: 10px 0;
+  }
+
+  .nav-top-options {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
 /* Navbar Container */
 .navbar-container {
   width: 100%;

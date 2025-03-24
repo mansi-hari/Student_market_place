@@ -1,33 +1,106 @@
-import React, { useState, useEffect } from "react";
+"use client"
 
+import { useState, useEffect } from "react"
 
-import { Link, useNavigate } from "react-router-dom";
-import { Book, Laptop, Sofa, PenTool, Bike, MoreHorizontal, Heart } from "lucide-react";
-import CategoryCard from "../Components/CategoryCard";
-import HowItWorks from "../Components/HowItWorksCard";
-import { toast } from "react-hot-toast";
-import "./HomePage.css";
+import { Link, useNavigate } from "react-router-dom"
+import { Book, Laptop, Sofa, PenTool, Bike, MoreHorizontal, Heart } from "lucide-react"
+import CategoryCard from "../Components/CategoryCard"
+import HowItWorks from "../Components/HowItWorksCard"
+import { toast } from "react-hot-toast"
+import "./HomePage.css"
 
 // Import local images
-import chairImg from "../Components/Assets/DeskChair.png";
-import laptopImg from "../Components/Assets/Laptop3.png";
-import laptop1Img from "../Components/Assets/HpLaptop.png";
-import textbookImg from "../Components/Assets/books.png";
-import Almirah from "../Components/Assets/Almirah.png";
-import ShivanshImg from "../Components/Assets/Shivansh.jpg";
-import ParidhiImg from "../Components/Assets/Paridhi.jpg";
-import SumitImg from "../Components/Assets/Sumit.jpg";
-import SamikshaImg from "../Components/Assets/Samiksha.jpg";
+import chairImg from "../Components/Assets/DeskChair.png"
+import laptopImg from "../Components/Assets/Laptop3.png"
+import laptop1Img from "../Components/Assets/HpLaptop.png"
+import textbookImg from "../Components/Assets/books.png"
+import Almirah from "../Components/Assets/Almirah.png"
+import ShivanshImg from "../Components/Assets/Shivansh.jpg"
+import ParidhiImg from "../Components/Assets/Paridhi.jpg"
+import SumitImg from "../Components/Assets/Sumit.jpg"
+import SamikshaImg from "../Components/Assets/Samiksha.jpg"
 
 // Data
 const categories = [
-  { icon: <Book size={32} />, name: "Books", count: "2.5k items", link: "/products/books" },
-  { icon: <Laptop size={32} />, name: "Electronics", count: "1.8k items", link: "/products/electronics" },
-  { icon: <Sofa size={32} />, name: "Furniture", count: "950 items", link: "/products/furniture" },
-  { icon: <PenTool size={32} />, name: "Supplies", count: "3.2k items", link: "/products/supplies" },
-  { icon: <Bike size={32} />, name: "Transport", count: "420 items", link: "/products/transport" },
-  { icon: <MoreHorizontal size={32} />, name: "Other", count: "1.1k items", link: "/products/other" },
-];
+  {
+    icon: <Book size={32} />,
+    name: "Books",
+    count: "2.5k items",
+    link: "/products/books",
+    description: "Textbooks, novels, study guides and more",
+    popularItems: [
+      { name: "Engineering Mathematics", price: 450 },
+      { name: "Data Structures Textbook", price: 350 },
+      { name: "Computer Networks", price: 500 },
+      { name: "Physics for Engineers", price: 400 },
+    ],
+  },
+  {
+    icon: <Laptop size={32} />,
+    name: "Electronics",
+    count: "1.8k items",
+    link: "/products/electronics",
+    description: "Laptops, phones, accessories and gadgets",
+    popularItems: [
+      { name: "HP Laptop", price: 25000 },
+      { name: "Dell Charger", price: 1200 },
+      { name: "Wireless Mouse", price: 800 },
+      { name: "Bluetooth Earphones", price: 1500 },
+    ],
+  },
+  {
+    icon: <Sofa size={32} />,
+    name: "Furniture",
+    count: "950 items",
+    link: "/products/furniture",
+    description: "Chairs, tables, beds and storage solutions",
+    popularItems: [
+      { name: "Study Table", price: 3500 },
+      { name: "Desk Chair", price: 2000 },
+      { name: "Bookshelf", price: 1800 },
+      { name: "Bedside Table", price: 1200 },
+    ],
+  },
+  {
+    icon: <PenTool size={32} />,
+    name: "Supplies",
+    count: "3.2k items",
+    link: "/products/supplies",
+    description: "Stationery, art supplies and study materials",
+    popularItems: [
+      { name: "Scientific Calculator", price: 1200 },
+      { name: "Drawing Kit", price: 800 },
+      { name: "Notebook Bundle", price: 350 },
+      { name: "Pen Set", price: 250 },
+    ],
+  },
+  {
+    icon: <Bike size={32} />,
+    name: "Transport",
+    count: "420 items",
+    link: "/products/transport",
+    description: "Bicycles, scooters and campus transport",
+    popularItems: [
+      { name: "Mountain Bike", price: 8000 },
+      { name: "Electric Scooter", price: 15000 },
+      { name: "Bicycle Helmet", price: 800 },
+      { name: "Bike Lock", price: 500 },
+    ],
+  },
+  {
+    icon: <MoreHorizontal size={32} />,
+    name: "Other",
+    count: "1.1k items",
+    link: "/products/other",
+    description: "Sports equipment, musical instruments and more",
+    popularItems: [
+      { name: "Acoustic Guitar", price: 5000 },
+      { name: "Badminton Racket", price: 1200 },
+      { name: "Yoga Mat", price: 600 },
+      { name: "Chess Set", price: 800 },
+    ],
+  },
+]
 
 const featuredItems = [
   {
@@ -75,7 +148,7 @@ const featuredItems = [
     seller: { name: "Shivansh Kumar", avatar: ShivanshImg },
     postedDate: "2 days ago",
   },
-];
+]
 
 const testimonials = [
   {
@@ -115,88 +188,85 @@ const testimonials = [
     author: "Kalyan Chandrasekar",
     source: "Google Play Review",
   },
-];
+]
 
 const Home = () => {
-  const navigate = useNavigate();
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [wishlist, setWishlist] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
- 
+  const navigate = useNavigate()
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [wishlist, setWishlist] = useState([])
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-
-  
   // Load wishlist from localStorage on component mount
   useEffect(() => {
-    const savedWishlist = localStorage.getItem("wishlist");
+    const savedWishlist = localStorage.getItem("wishlist")
     if (savedWishlist) {
-      setWishlist(JSON.parse(savedWishlist));
+      setWishlist(JSON.parse(savedWishlist))
     }
 
     // Check if user is logged in
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-  }, []);
+    const token = localStorage.getItem("token")
+    setIsLoggedIn(!!token)
+  }, [])
 
   // Save wishlist to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
-  }, [wishlist]);
+    localStorage.setItem("wishlist", JSON.stringify(wishlist))
+  }, [wishlist])
 
   const handleImageClick = (image, e) => {
-    e.stopPropagation(); // Prevent the product click event
-    setSelectedImage(image);
-  };
+    e.stopPropagation() // Prevent the product click event
+    setSelectedImage(image)
+  }
 
   const handleCloseModal = () => {
-    setSelectedImage(null);
-  };
+    setSelectedImage(null)
+  }
 
   const handleAddToWishlist = (product, e) => {
-    e.stopPropagation(); // Prevent the product click event
+    e.stopPropagation() // Prevent the product click event
 
     // Check if user is logged in
     if (!isLoggedIn) {
-      toast.error("Please login to add items to your wishlist");
-      navigate("/auth/login");
-      return;
+      toast.error("Please login to add items to your wishlist")
+      navigate("/auth/login")
+      return
     }
 
     // Check if product is already in wishlist
-    const isInWishlist = wishlist.some((item) => item.id === product.id);
+    const isInWishlist = wishlist.some((item) => item.id === product.id)
 
     if (isInWishlist) {
       // Remove from wishlist
-      const updatedWishlist = wishlist.filter((item) => item.id !== product.id);
-      setWishlist(updatedWishlist);
-      toast.success(`${product.title} removed from wishlist`);
+      const updatedWishlist = wishlist.filter((item) => item.id !== product.id)
+      setWishlist(updatedWishlist)
+      toast.success(`${product.title} removed from wishlist`)
     } else {
       // Add to wishlist
-      setWishlist([...wishlist, product]);
-      toast.success(`${product.title} added to wishlist`);
+      setWishlist([...wishlist, product])
+      toast.success(`${product.title} added to wishlist`)
     }
-  };
+  }
 
   const handleProductClick = (product) => {
-    setSelectedProduct(product);
-  };
+    setSelectedProduct(product)
+  }
 
   const handleCloseProductModal = () => {
-    setSelectedProduct(null);
-  };
+    setSelectedProduct(null)
+  }
 
   const handleContactSeller = (product) => {
     if (!isLoggedIn) {
-      toast.error("Please login to contact the seller");
-      navigate("/auth/login");
-      return;
+      toast.error("Please login to contact the seller")
+      navigate("/auth/login")
+      return
     }
 
     // In a real app, this would open a chat or contact form
-    toast.success(`Contacting ${product.seller.name} about ${product.title}`);
+    toast.success(`Contacting ${product.seller.name} about ${product.title}`)
     // You could navigate to a chat page or open a modal here
-  };
+  }
 
   const StarRating = ({ rating }) => {
     return (
@@ -213,13 +283,13 @@ const Home = () => {
           </span>
         ))}
       </div>
-    );
-  };
+    )
+  }
 
   // Check if a product is in the wishlist
   const isInWishlist = (productId) => {
-    return wishlist.some((item) => item.id === productId);
-  };
+    return wishlist.some((item) => item.id === productId)
+  }
 
   return (
     <div>
@@ -229,7 +299,11 @@ const Home = () => {
           <h2 style={{ fontSize: "32px", fontWeight: "500", marginBottom: "32px" }}>Popular Categories</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "16px" }}>
             {categories.map((category) => (
-              <Link to={category.link} key={category.name} style={{ textDecoration: "none", color: "inherit" }}>
+              <Link
+                to={`/browse/${category.name.toLowerCase()}`}
+                key={category.name}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
                 <CategoryCard {...category} />
               </Link>
             ))}
@@ -381,10 +455,8 @@ const Home = () => {
         </div>
       </section>
     </div>
-  );
-};
+  )
+}
 
+export default Home
 
-
-
-export default Home;

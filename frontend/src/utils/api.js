@@ -35,6 +35,7 @@ api.interceptors.response.use(
   },
 )
 
+// Signup function
 const signup = async (userData) => {
   try {
     const response = await api.post("/auth/signup", userData) // Changed from /users/signup
@@ -55,6 +56,17 @@ const login = async (userData) => {
 const getProducts = async () => {
   const response = await api.get("/products")
   return response.data
+}
+
+// Create a new product (sell page)
+const createProduct = async (productData) => {
+  try {
+    const response = await api.post("/products", productData) // Send product data to backend
+    return response.data
+  } catch (error) {
+    console.error("Create product error: ", error)
+    throw error
+  }
 }
 
 // Add a product to wishlist
@@ -87,6 +99,7 @@ const clearWishlist = async () => {
   return response.data
 }
 
+// Get current user details
 const getCurrentUser = async () => {
   const response = await api.get("/auth/me") // Adjust this endpoint based on your backend
   return response.data
@@ -96,11 +109,11 @@ export default {
   signup,
   login,
   getProducts,
+  createProduct,  // Add this new function
   addToWishlist,
   removeFromWishlist,
   getWishlist,
   checkWishlist,
   clearWishlist,
-  getCurrentUser, // ✅ Add this line
+  getCurrentUser,
 }
-

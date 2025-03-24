@@ -1,10 +1,9 @@
-"use client"
-
 import { useState } from "react"
 import axios from "axios"
 import { useNavigate, Link } from "react-router-dom"
 import { toast } from "react-hot-toast"
-import { initializeSocket } from "../utils/socket"
+import { initializeSocket } from "../utils/socket"; // Adjust the path as needed
+
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -16,50 +15,46 @@ const Login = () => {
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+  
     try {
-      console.log("Sending login request to:", `${API_URL}/api/auth/login`)
-      console.log("With data:", { email, password })
-
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password,
-      })
+      });
+  
+      console.log("Login API Response:", response.data); 
 
-      console.log("Login response:", response.data)
-
-      // Handle both response structures (from auth.controller.js and authRoutes.js)
       if (response.data.success) {
-        // Extract token and user based on response structure
-        const token = response.data.token || response.data.data?.token
-        const user = response.data.user || response.data.data?.user
-
+        const token = response.data.token;
+        const user = response.data.user;
+  
         if (!token || !user) {
-          throw new Error("Invalid response structure")
+          throw new Error("Invalid response structure");
         }
-
-        // Store token and user info
-        localStorage.setItem("token", token)
-        localStorage.setItem("user", JSON.stringify(user))
-
+  
+        // Store token and user
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+  
         // Initialize socket connection
-        initializeSocket(token)
-
-        toast.success("Login successful!")
-        navigate("/Home")
+        initializeSocket(token);
+  
+        toast.success("Login successful!");
+        navigate("/sell");
       } else {
-        setError(response.data.message || "Login failed")
+        setError(response.data.message || "Login failed");
       }
     } catch (err) {
-      console.error("Login error:", err)
-      setError(err.response?.data?.message || "Invalid credentials. Please try again.")
+      console.error("Login error:",  err.response?.data || err.message);
+      setError(err.response?.data?.message || "Invalid credentials. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+  
 
   return (
     <div className="container py-5">
@@ -77,9 +72,7 @@ const Login = () => {
 
               <form onSubmit={handleLogin}>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">
-                    Email
-                  </label>
+                  <label htmlFor="email" className="form-label">Email</label>
                   <input
                     type="email"
                     id="email"
@@ -91,9 +84,7 @@ const Login = () => {
                 </div>
 
                 <div className="mb-3">
-                  <label htmlFor="password" className="form-label">
-                    Password
-                  </label>
+                  <label htmlFor="password" className="form-label">Password</label>
                   <input
                     type="password"
                     id="password"
@@ -104,29 +95,14 @@ const Login = () => {
                   />
                 </div>
 
-                <div className="mb-3 text-end">
-                  <Link to="/auth/forgot-password" className="text-decoration-none">
-                    Forgot Password?
-                  </Link>
-                </div>
-
                 <button type="submit" className="btn btn-primary w-100" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Logging in...
-                    </>
-                  ) : (
-                    "Login"
-                  )}
+                  {isLoading ? "Logging in..." : "Login"}
                 </button>
 
                 <div className="mt-3 text-center">
                   <p>
                     Don't have an account?{" "}
-                    <Link to="/auth/signup" className="text-decoration-none">
-                      Sign up
-                    </Link>
+                    <Link to="/auth/signup" className="text-decoration-none">Sign up</Link>
                   </p>
                 </div>
               </form>
@@ -139,4 +115,3 @@ const Login = () => {
 }
 
 export default Login
-

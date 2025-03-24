@@ -15,7 +15,7 @@ export const initializeSocket = (token) => {
   }
 
   // Create new socket connection
-  socket = io(process.env.REACT_APP_API_URL.replace('/api', '') || 'http://localhost:5000', {
+  socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000', {
     auth: { token },
     transports: ["websocket"],
   });

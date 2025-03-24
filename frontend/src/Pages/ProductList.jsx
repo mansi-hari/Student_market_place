@@ -1,104 +1,151 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import ProductCard from "./ProductCard/ProductCard"
+import { useSearchParams } from "react-router-dom"
+import axios from "axios"
+import ProductCard from "./ProductCard"
+import { getSelectedLocation } from "../utils/locationService"
+import "./ProductList.css"
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+
 const ProductList = ({ category, limit = 20, featured = false, recent = false }) => {
+  const [searchParams] = useSearchParams()
   const [products, setProducts] = useState([])
+  const [filteredProducts, setFilteredProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [sortBy, setSortBy] = useState("newest")
+  const [selectedLocation, setSelectedLocation] = useState(null)
+
+  // Get search parameters
+  const searchQuery = searchParams.get("search") || ""
+  const locationParam = searchParams.get("location") || ""
 
   useEffect(() => {
-    // Simulate API call with setTimeout
-    setLoading(true)
+    // Get selected location from localStorage
+    const savedLocation = getSelectedLocation()
+    if (savedLocation) {
+      setSelectedLocation(savedLocation)
+    }
+  }, [])
 
-    setTimeout(() => {
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true)
       try {
-        let fetchedProducts = []
+        // Build query parameters
+        const params = new URLSearchParams()
 
-        if (featured) {
-          fetchedProducts = getFeaturedProducts(limit)
-        } else if (recent) {
-          fetchedProducts = getRecentProducts(limit)
-        } else {
-          fetchedProducts = getProductsByCategory(category || "all")
-
-          // Apply limit if specified
-          if (limit && limit < fetchedProducts.length) {
-            fetchedProducts = fetchedProducts.slice(0, limit)
-          }
+        if (category && category !== "all") {
+          params.set("category", category)
         }
 
-        setProducts(fetchedProducts)
+        if (limit) {
+          params.set("limit", limit.toString())
+        }
+
+        if (featured) {
+          params.set("featured", "true")
+        }
+
+        if (recent) {
+          params.set("sort", "newest")
+        }
+
+        if (searchQuery) {
+          params.set("search", searchQuery)
+        }
+
+        // Use location from URL parameter or selected location
+        const locationFilter = locationParam || (selectedLocation ? selectedLocation.pinCode : null)
+        if (locationFilter) {
+          params.set("location", locationFilter)
+        }
+
+        // Make API request
+        const response = await axios.get(`${API_URL}/api/products?${params.toString()}`)
+        setProducts(response.data)
         setError(null)
       } catch (err) {
         console.error("Error fetching products:", err)
         setError("Failed to load products. Please try again later.")
+        setProducts([])
       } finally {
         setLoading(false)
       }
-    }, 500) // Simulate network delay
-  }, [category, limit, featured, recent])
+    }
 
-  const sortProducts = (products) => {
+    fetchProducts()
+  }, [category, limit, featured, recent, searchQuery, locationParam, selectedLocation])
+
+  // Apply client-side sorting
+  useEffect(() => {
+    const result = [...products]
+
+    // Apply sorting
     switch (sortBy) {
       case "price-low":
-        return [...products].sort((a, b) => a.price - b.price)
+        result.sort((a, b) => a.price - b.price)
+        break
       case "price-high":
-        return [...products].sort((a, b) => b.price - a.price)
+        result.sort((a, b) => b.price - a.price)
+        break
       case "newest":
-        return [...products].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        break
       default:
-        return products
+        break
     }
-  }
 
-  const sortedProducts = sortProducts(products)
+    setFilteredProducts(result)
+  }, [products, sortBy])
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center h-64">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading products...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="text-center text-danger p-4">
+      <div className="error-container">
         <p>{error}</p>
       </div>
     )
   }
 
-  if (sortedProducts.length === 0) {
+  if (filteredProducts.length === 0) {
     return (
-      <div className="text-center p-4">
-        <p className="text-muted">No products found in this category.</p>
+      <div className="no-products-container">
+        <p>
+          No products found{searchQuery ? ` for "${searchQuery}"` : ""}
+          {selectedLocation ? ` in ${selectedLocation.name}` : ""}.
+        </p>
+        {(searchQuery || selectedLocation) && <p>Try adjusting your search criteria or location.</p>}
       </div>
     )
   }
 
   return (
-    <div className="container">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="h4 fw-bold">
-          {category ? `${category} Products` : "All Products"}
-          <span className="text-muted ms-2 fs-6">({sortedProducts.length} items)</span>
-        </h2>
+    <div className="product-list-container">
+      <div className="product-list-header">
+        <div className="product-count">
+          <h2>
+            {category ? `${category} Products` : "All Products"}
+            <span className="product-count-badge">{filteredProducts.length} items</span>
+          </h2>
 
-        <div className="d-flex align-items-center">
-          <label htmlFor="sort" className="form-label me-2 mb-0 small">
-            Sort by:
-          </label>
-          <select
-            id="sort"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="form-select form-select-sm"
-          >
+          {selectedLocation && <div className="location-filter-badge">Showing products in {selectedLocation.name}</div>}
+        </div>
+
+        <div className="sort-container">
+          <label htmlFor="sort">Sort by:</label>
+          <select id="sort" value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="sort-select">
             <option value="newest">Newest</option>
             <option value="price-low">Price: Low to High</option>
             <option value="price-high">Price: High to Low</option>
@@ -106,11 +153,9 @@ const ProductList = ({ category, limit = 20, featured = false, recent = false })
         </div>
       </div>
 
-      <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        {sortedProducts.map((product) => (
-          <div className="col" key={product._id}>
-            <ProductCard product={product} />
-          </div>
+      <div className="products-grid">
+        {filteredProducts.map((product) => (
+          <ProductCard key={product._id} product={product} />
         ))}
       </div>
     </div>

@@ -1,18 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import "./Navbar.css";
+"use client"
 
-import logo from "../Assets/logo.png";
-import waterPurifierImage from "../Assets/water-purifier.png";
-import metalBedImage from "../Assets/metal-bed.png";
-import laptopImage from "../Assets/HpLaptop.png";
+import { useState, useEffect } from "react"
+import { Link, useNavigate, useLocation } from "react-router-dom"
+import { toast } from "react-hot-toast"
+import "./Navbar.css"
+import LocationSearch from "../LocationSearch"
+import { getSelectedLocation } from "../../utils/locationService"
+
+import logo from "../Assets/logo.png"
+import waterPurifierImage from "../Assets/water-purifier.png"
+import metalBedImage from "../Assets/metal-bed.png"
+import laptopImage from "../Assets/HpLaptop.png"
 
 import {
   FaSearch,
   FaStore,
   FaShoppingCart,
-  FaMapMarkerAlt,
   FaBars,
   FaTimes,
   FaUser,
@@ -22,87 +25,116 @@ import {
   FaMoneyCheckAlt,
   FaHeart,
   FaSignOutAlt,
-} from "react-icons/fa";
+} from "react-icons/fa"
 
 const Navbar = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [menu, setMenu] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
-  const popularCities = ["Bangalore", "Chennai", "Delhi", "Hyderabad", "Mumbai"];
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [menu, setMenu] = useState("")
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [search, setSearch] = useState("")
+  const [selectedLocation, setSelectedLocation] = useState(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [user, setUser] = useState(null)
 
   // Sample product data for search results
   const products = [
     { id: 1, name: "Water Purifier", image: waterPurifierImage, price: "₹800/mo", originalPrice: "₹1479/mo" },
     { id: 2, name: "Napster Metal Queen Bed", image: metalBedImage, price: "₹1000/mo", originalPrice: "₹1500/mo" },
     { id: 3, name: "Hp Victus Laptop", image: laptopImage, price: "₹25000/mo", originalPrice: "₹30000/mo" },
-  ];
+  ]
 
-  // Set active menu based on current path
+  // Set active menu based on current path and check login status
   useEffect(() => {
-    const path = location.pathname;
-    if (path === "/") setMenu("Home");
-    else if (path.includes("/products")) setMenu("Browse");
-    else if (path.includes("/sell")) setMenu("Sell");
-    else if (path.includes("/wishlist")) setMenu("Wishlist");
-    else setMenu("");
+    const path = location.pathname
+    if (path === "/") setMenu("Home")
+    else if (path.includes("/products")) setMenu("Browse")
+    else if (path.includes("/sell")) setMenu("Sell")
+    else if (path.includes("/wishlist")) setMenu("Wishlist")
+    else setMenu("")
 
     // Check if user is logged in
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
+    const token = localStorage.getItem("token")
+    const userData = localStorage.getItem("user")
 
     if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
+      setIsLoggedIn(true)
+      setUser(JSON.parse(userData))
     } else {
-      setIsLoggedIn(false);
-      setUser(null);
+      setIsLoggedIn(false)
+      setUser(null)
     }
-  }, [location.pathname]);
 
-  const handleCityClick = (city) => {
-    setSelectedCity(city);
-    setIsDropdownOpen(false);
-    localStorage.setItem("selectedCity", city);
-    toast.success(`Location set to ${city}`);
-  };
+    // Get selected location from localStorage
+    const savedLocation = getSelectedLocation()
+    if (savedLocation) {
+      setSelectedLocation(savedLocation)
+    }
+  }, [location.pathname])
+
+  // Fix the handleLocationSelect function to avoid confusion with the router location
+  const handleLocationSelect = (selectedLoc) => {
+    setSelectedLocation(selectedLoc)
+
+    // Refresh products if we're on a product page
+    if (location.pathname.includes("/products")) {
+      // We'll add the location filter to the current URL
+      const searchParams = new URLSearchParams(window.location.search)
+
+      if (selectedLoc) {
+        searchParams.set("location", selectedLoc.pinCode)
+      } else {
+        searchParams.delete("location")
+      }
+
+      navigate({
+        pathname: location.pathname,
+        search: searchParams.toString(),
+      })
+    }
+
+    if (selectedLoc) {
+      toast.success(`Location set to ${selectedLoc.name}`)
+    }
+  }
 
   const handleSearchChange = (event) => {
-    setSearch(event.target.value);
-  };
+    setSearch(event.target.value)
+  }
 
   const handleSearchSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (search.trim()) {
-      navigate(`/products?search=${encodeURIComponent(search)}`);
-      setSearchOpen(false);
+      const searchParams = new URLSearchParams()
+      searchParams.set("search", search)
+
+      // Add location to search if selected
+      if (selectedLocation) {
+        searchParams.set("location", selectedLocation.pinCode)
+      }
+
+      navigate(`/products?${searchParams.toString()}`)
+      setSearchOpen(false)
     }
-  };
+  }
 
   const handleProductClick = (productId) => {
-    navigate(`/products/${productId}`);
-    setSearchOpen(false);
-  };
+    navigate(`/products/${productId}`)
+    setSearchOpen(false)
+  }
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    setUser(null);
-    toast.success("Logged out successfully");
-    navigate("/");
-  };
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    setIsLoggedIn(false)
+    setUser(null)
+    toast.success("Logged out successfully")
+    navigate("/")
+  }
 
   // Filter products based on the search term
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="navbar-container">
@@ -113,32 +145,9 @@ const Navbar = () => {
             <img src={logo || "/placeholder.svg"} alt="Logo" />
           </Link>
           <p>Student Marketplace</p>
-          <div className="location-box" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-            <FaMapMarkerAlt size={20} />
-            <span>{selectedCity || "Location"}</span>
-            <button className="location-button">▼</button>
-            {isDropdownOpen && (
-              <div className="location-dropdown">
-                <input
-                  type="text"
-                  placeholder="Search your city"
-                  className="location-search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                <h4>Popular cities</h4>
-                <ul className="location-list">
-                  {popularCities
-                    .filter((city) => city.toLowerCase().includes(search.toLowerCase()))
-                    .map((city, index) => (
-                      <li key={index} onClick={() => handleCityClick(city)}>
-                        {city}
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
-          </div>
+
+          {/* Location search component */}
+          <LocationSearch onLocationSelect={handleLocationSelect} initialLocation={selectedLocation} />
         </div>
 
         {/* Search Bar */}
@@ -146,12 +155,7 @@ const Navbar = () => {
           <form onSubmit={handleSearchSubmit} className="search-form">
             <div className="search-bar" onClick={() => setSearchOpen(true)}>
               <FaSearch className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search for products"
-                value={search}
-                onChange={handleSearchChange}
-              />
+              <input type="text" placeholder="Search for products" value={search} onChange={handleSearchChange} />
             </div>
           </form>
           {searchOpen && (
@@ -163,9 +167,18 @@ const Navbar = () => {
                     key={item}
                     className="search-tag"
                     onClick={() => {
-                      setSearch(item);
-                      navigate(`/products?search=${encodeURIComponent(item)}`);
-                      setSearchOpen(false);
+                      setSearch(item)
+
+                      const searchParams = new URLSearchParams()
+                      searchParams.set("search", item)
+
+                      // Add location to search if selected
+                      if (selectedLocation) {
+                        searchParams.set("location", selectedLocation.pinCode)
+                      }
+
+                      navigate(`/products?${searchParams.toString()}`)
+                      setSearchOpen(false)
                     }}
                   >
                     {item}
@@ -175,11 +188,7 @@ const Navbar = () => {
               <h4>Top Selling Products</h4>
               <div className="top-products">
                 {filteredProducts.map((product) => (
-                  <div
-                    key={product.id}
-                    className="product-card"
-                    onClick={() => handleProductClick(product.id)}
-                  >
+                  <div key={product.id} className="product-card" onClick={() => handleProductClick(product.id)}>
                     <img src={product.image || "/placeholder.svg"} alt={product.name} />
                     <p>{product.name}</p>
                     <span>
@@ -319,17 +328,17 @@ const Navbar = () => {
       )}
 
       {/* Overlay for closing dropdowns */}
-      {(searchOpen || isDropdownOpen) && (
+      {searchOpen && (
         <div
           className="overlay"
           onClick={() => {
-            setSearchOpen(false);
-            setIsDropdownOpen(false);
+            setSearchOpen(false)
           }}
         />
       )}
     </div>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar
+

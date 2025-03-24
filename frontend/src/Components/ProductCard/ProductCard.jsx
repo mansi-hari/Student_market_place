@@ -1,11 +1,15 @@
-import React from 'react';
+import React from "react";
 
-const ProductCard = ({ product, showContactButton }) => {
+const ProductCard = ({ product, openChat }) => {
+  if (!product) return null; // Ensure product is not undefined
+
   return (
-    <div style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '16px' }}>
-      <h3>{product.name}</h3>
-      <p>Price: ${product.price}</p>
-      {showContactButton && <button>Contact Seller</button>}
+    <div className="product-card">
+      <h3>{product.title}</h3>
+      {/* ✅ Use openChat correctly */}
+      <button onClick={() => openChat(product.sellerId)} className="btn btn-primary">
+        Contact Seller
+      </button>
     </div>
   );
 };

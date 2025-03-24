@@ -1,126 +1,183 @@
 "use client"
 
-import { useState } from "react"
-import { MapPin, Search, Sliders } from "lucide-react"
-import { getCurrentLocation, reverseGeocode } from "../utils/geocodingService"
-import LocationInput from "./LocationInput"
+import { useState, useEffect, useRef } from "react"
+import { FaMapMarkerAlt, FaSearch, FaTimes } from "react-icons/fa"
+import { getPopularCities, searchLocations, saveSelectedLocation } from "../utils/locationService"
+import "./LocationSearch.css"
 
-const LocationSearch = ({ onSearch }) => {
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [searchRadius, setSearchRadius] = useState(10) // in kilometers
-  const [selectedLocation, setSelectedLocation] = useState(null)
-  const [isUsingCurrentLocation, setIsUsingCurrentLocation] = useState(false)
+const LocationSearch = ({ onLocationSelect, initialLocation }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [locations, setLocations] = useState([])
+  const [popularCities, setPopularCities] = useState([])
+  const [selectedLocation, setSelectedLocation] = useState(initialLocation || null)
+  const [loading, setLoading] = useState(false)
+  const dropdownRef = useRef(null)
+  const searchInputRef = useRef(null)
 
-  // Handle location selection
-  const handleLocationSelect = (locationData) => {
-    setSelectedLocation(locationData)
-  }
+  // Fetch popular cities on component mount
+  useEffect(() => {
+    const fetchPopularCities = async () => {
+      const cities = await getPopularCities()
+      setPopularCities(cities)
+    }
 
-  // Handle search radius change
-  const handleRadiusChange = (e) => {
-    setSearchRadius(Number.parseInt(e.target.value, 10))
-  }
+    fetchPopularCities()
+  }, [])
 
-  // Handle search submission
-  const handleSearch = () => {
-    if (selectedLocation && selectedLocation.coordinates) {
-      onSearch({
-        coordinates: selectedLocation.coordinates,
-        radius: searchRadius,
-        address: selectedLocation.formattedAddress,
-      })
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // Search for locations when query changes
+  useEffect(() => {
+    const searchTimer = setTimeout(async () => {
+      if (searchQuery.trim()) {
+        setLoading(true)
+        const results = await searchLocations(searchQuery)
+        setLocations(results)
+        setLoading(false)
+      } else {
+        setLocations([])
+      }
+    }, 300)
+
+    return () => clearTimeout(searchTimer)
+  }, [searchQuery])
+
+  const handleLocationSelect = (location) => {
+    setSelectedLocation(location)
+    saveSelectedLocation(location)
+    setIsOpen(false)
+    setSearchQuery("")
+
+    if (onLocationSelect) {
+      onLocationSelect(location)
     }
   }
 
-  // Use current location
-  const handleUseCurrentLocation = async () => {
-    setIsUsingCurrentLocation(true)
-    try {
-      const coords = await getCurrentLocation()
-      const result = await reverseGeocode(coords.latitude, coords.longitude)
+  // Allow users to add a custom location
+  const handleAddCustomLocation = () => {
+    if (!searchQuery.trim()) return
 
-      if (result.success) {
-        const locationData = {
-          formattedAddress: result.formattedAddress,
-          coordinates: coords,
-        }
-        setSelectedLocation(locationData)
-        onSearch({
-          coordinates: coords,
-          radius: searchRadius,
-          address: result.formattedAddress,
-        })
-      }
-    } catch (error) {
-      console.error("Error getting current location:", error)
-    } finally {
-      setIsUsingCurrentLocation(false)
+    const customLocation = {
+      name: searchQuery,
+      state: "",
+      pinCode: searchQuery.replace(/\D/g, "").substring(0, 6) || "000000", // Extract numbers or use default
+      coordinates: { lat: 0, lng: 0 },
+    }
+
+    handleLocationSelect(customLocation)
+  }
+
+  const handleToggleDropdown = () => {
+    setIsOpen(!isOpen)
+    if (!isOpen && searchInputRef.current) {
+      setTimeout(() => {
+        searchInputRef.current.focus()
+      }, 100)
+    }
+  }
+
+  const handleClearLocation = (e) => {
+    e.stopPropagation()
+    setSelectedLocation(null)
+    saveSelectedLocation(null)
+
+    if (onLocationSelect) {
+      onLocationSelect(null)
     }
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Find Products Near You</h3>
-          <button
-            type="button"
-            className="text-blue-600 hover:text-blue-800 flex items-center"
-            onClick={() => setIsFilterOpen(!isFilterOpen)}
-          >
-            <Sliders className="h-4 w-4 mr-1" />
-            Filters
+    <div className="location-search-container" ref={dropdownRef}>
+      <div className={`location-selector ${isOpen ? "active" : ""}`} onClick={handleToggleDropdown}>
+        <FaMapMarkerAlt className="location-icon" />
+        <span className="location-text">{selectedLocation ? selectedLocation.name : "Select Location"}</span>
+        {selectedLocation && (
+          <button className="clear-location-btn" onClick={handleClearLocation} aria-label="Clear location">
+            <FaTimes />
           </button>
-        </div>
-
-        <div className="mb-4">
-          <LocationInput onLocationSelect={handleLocationSelect} />
-        </div>
-
-        {isFilterOpen && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-md">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Search Radius: {searchRadius} km</label>
-            <input
-              type="range"
-              min="1"
-              max="50"
-              value={searchRadius}
-              onChange={handleRadiusChange}
-              className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>1 km</span>
-              <span>25 km</span>
-              <span>50 km</span>
-            </div>
-          </div>
         )}
-
-        <div className="flex space-x-2">
-          <button
-            type="button"
-            className="flex-1 py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center"
-            onClick={handleSearch}
-            disabled={!selectedLocation}
-          >
-            <Search className="h-4 w-4 mr-2" />
-            Search
-          </button>
-          <button
-            type="button"
-            className="py-2 px-4 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center"
-            onClick={handleUseCurrentLocation}
-            disabled={isUsingCurrentLocation}
-          >
-            {isUsingCurrentLocation ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500 mr-2"></div>
-            ) : (
-              <MapPin className="h-4 w-4 mr-2" />
-            )}
-            Near Me
-          </button>
-        </div>
+        <span className="dropdown-arrow">▼</span>
       </div>
+
+      {isOpen && (
+        <div className="location-dropdown">
+          <div className="search-input-container">
+            <FaSearch className="search-icon" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="location-search-input"
+              placeholder="Search for your city..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="location-results">
+            {loading ? (
+              <div className="loading-indicator">
+                <div className="spinner"></div>
+                <span>Searching...</span>
+              </div>
+            ) : (
+              <>
+                {locations.length > 0 ? (
+                  <div className="location-list">
+                    <h4>Search Results</h4>
+                    <ul>
+                      {locations.map((location, index) => (
+                        <li key={`search-${index}`} onClick={() => handleLocationSelect(location)}>
+                          <FaMapMarkerAlt className="list-icon" />
+                          <div>
+                            <span className="location-name">{location.name}</span>
+                            {location.state && <span className="location-state">{location.state}</span>}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <>
+                    {searchQuery && (
+                      <div className="custom-location-option">
+                        <p>Can't find your location?</p>
+                        <button className="custom-location-btn" onClick={handleAddCustomLocation}>
+                          Use "{searchQuery}" as my location
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="popular-cities">
+                      <h4>Popular Cities</h4>
+                      <ul>
+                        {popularCities.map((city, index) => (
+                          <li key={`popular-${index}`} onClick={() => handleLocationSelect(city)}>
+                            <FaMapMarkerAlt className="list-icon" />
+                            <span className="location-name">{city.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
