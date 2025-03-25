@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useEffect } from 'react';
-import { initializeSocket } from './utils/socket'; 
+import { initializeSocket } from './utils/socket';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './Context/AuthContext';
@@ -24,7 +24,7 @@ import './App.css';
 
 function App() {
   const token = localStorage.getItem('token'); // Get token from localStorage
-  
+
   // Initialize socket connection if user is logged in
   useEffect(() => {
     if (token) {
@@ -66,7 +66,7 @@ const AppContent = () => {
         <Route path="/browse/:category" element={<Browse />} />
         <Route path="/products/:category" element={<CategoryPage />} />
         <Route path="/product/:id" element={<ProductDetail />} />  {/* Fixed Route for Product Details */}
-        
+
         {/* Chat Page Route */}
         <Route path="/chat/:sellerId" element={<ChatPage />} />
 
@@ -75,11 +75,12 @@ const AppContent = () => {
         <Route path="/auth/signup" element={<Signup isSignup={true} />} />
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-        
+
         {/* <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} /> */}
         {/* <Route path="/sell" element={<SellPage />}/> */}
         <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} />
-        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
 

@@ -44,7 +44,7 @@ const Login = () => {
         initializeSocket(token);
   
         toast.success("Login successful!");
-        navigate("/sell");
+        navigate("/");
       } else {
         setError(response.data.message || "Login failed");
       }
