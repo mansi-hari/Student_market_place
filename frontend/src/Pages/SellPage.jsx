@@ -1,21 +1,42 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
-import "./SellPage.css"; // Ensure you have this CSS file for styling
+import "./SellPage.css";
 
 const SellPage = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
   const [formData, setFormData] = useState({
     title: "",
     category: "",
-    otherCategory: "", // Added for "Others" input
+    otherCategory: "",
     price: "",
     description: "",
     condition: "New",
     tags: "",
     photos: [],
     location: "",
+    pincode: "",
+    fullAddress: "",
     negotiable: false,
   });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/categories");
+        console.log("Fetched categories:", response.data);
+        setCategories(response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        toast.error("Failed to load categories");
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,7 +49,7 @@ const SellPage = () => {
   const handlePhotoUpload = (e) => {
     const files = Array.from(e.target.files);
     if (files.length + formData.photos.length > 5) {
-      alert("You can upload a maximum of 5 photos.");
+      toast.error("You can upload a maximum of 5 photos");
       return;
     }
     setFormData((prev) => ({
@@ -46,39 +67,39 @@ const SellPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const submissionData = new FormData();
-    submissionData.append("title", formData.title);
-    submissionData.append(
-      "category",
-      formData.category === "Others" ? formData.otherCategory : formData.category
-    );
-    submissionData.append("price", formData.price);
-    submissionData.append("description", formData.description);
-    submissionData.append("condition", formData.condition);
-    submissionData.append("tags", formData.tags);
-    submissionData.append("location", formData.location);
-    submissionData.append("negotiable", formData.negotiable);
-
-    formData.photos.forEach((photo) => {
-      submissionData.append("photos", photo);
-    });
+    setIsLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/products",
-        submissionData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+      const submissionData = new FormData();
+      submissionData.append("title", formData.title);
+      submissionData.append(
+        "category",
+        formData.category === "Others" ? formData.otherCategory : formData.category
       );
+      submissionData.append("price", formData.price);
+      submissionData.append("description", formData.description);
+      submissionData.append("condition", formData.condition);
+      submissionData.append("tags", formData.tags);
+      submissionData.append("location", formData.location);
+      submissionData.append("pincode", formData.pincode);
+      submissionData.append("fullAddress", formData.fullAddress);
+      submissionData.append("negotiable", formData.negotiable);
 
-      console.log("Listing Item:", response.data);
-      alert("Item listed successfully!");
+      formData.photos.forEach((photo) => {
+        submissionData.append("photos", photo);
+      });
 
-      // Clear form fields after submission
+      const token = localStorage.getItem("token");
+
+      await axios.post("http://localhost:5000/api/products", submissionData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      toast.success("Item listed successfully!");
+
       setFormData({
         title: "",
         category: "",
@@ -89,162 +110,95 @@ const SellPage = () => {
         tags: "",
         photos: [],
         location: "",
+        pincode: "",
+        fullAddress: "",
         negotiable: false,
       });
+
+      navigate("/");
     } catch (error) {
       console.error("Error listing item:", error);
-      alert("There was an error listing the item. Please try again.");
+      toast.error(error.response?.data?.message || "Failed to list item. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="sell-container">
-      <h2 className="sell-title">List Your Item</h2>
-      <form onSubmit={handleSubmit} className="sell-form">
-        <div className="sell-field">
-          <label>Item Title</label>
-          <input
-            type="text"
-            name="title"
-            placeholder="e.g., MacBook Pro 2021"
-            value={formData.title}
-            onChange={handleChange}
-            required
-          />
-        </div>
+    <div className="container py-5">
+      <div className="row justify-content-center">
+        <div className="col-lg-8">
+          <div className="card shadow">
+            <div className="card-body p-4">
+              <h2 className="text-center mb-4">List Your Item</h2>
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                  <label className="form-label">Item Title</label>
+                  <input type="text" className="form-control" name="title" value={formData.title} onChange={handleChange} required />
+                </div>
 
-        <div className="sell-field">
-          <label>Category</label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select a category</option>
-            <option value="Electronics">Electronics</option>
-            <option value="Furniture">Furniture</option>
-            <option value="Books">Books</option>
-            <option value="Transport">Transport</option>
-            <option value="Supplies">Supplies</option>
-            <option value="Others">Others</option>
-          </select>
-        </div>
+                <div className="mb-3">
+                  <label className="form-label">Category</label>
+                  <select className="form-select" name="category" value={formData.category} onChange={handleChange} required>
+                    <option value="">Select a category</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-        {/* Show input field if 'Others' is selected */}
-        {formData.category === "Others" && (
-          <div className="sell-field">
-            <label>Enter Category Name</label>
-            <input
-              type="text"
-              name="otherCategory"
-              placeholder="Enter category name"
-              value={formData.otherCategory}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        )}
+                {formData.category === "Others" && (
+                  <div className="mb-3">
+                    <label className="form-label">Specify Category</label>
+                    <input type="text" className="form-control" name="otherCategory" value={formData.otherCategory} onChange={handleChange} required />
+                  </div>
+                )}
 
-        <div className="sell-field">
-          <label>Price (in ₹)</label>
-          <input
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            required
-          />
-        </div>
+                <div className="mb-3">
+                  <label className="form-label">Price (₹)</label>
+                  <input type="number" className="form-control" name="price" value={formData.price} onChange={handleChange} required />
+                </div>
 
-        <div className="sell-field">
-          <label>Location</label>
-          <input
-            type="text"
-            name="location"
-            placeholder="e.g., Pune, FC Road"
-            value={formData.location}
-            onChange={handleChange}
-            required
-          />
-        </div>
+                <div className="mb-3">
+                  <label className="form-label">Photos (Max: 5)</label>
+                  <input type="file" className="form-control" accept="image/*" multiple onChange={handlePhotoUpload} />
+                </div>
 
-        <div className="sell-field">
-          <label>Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-          ></textarea>
-        </div>
+                <div className="mb-3">
+                  <label className="form-label">Location</label>
+                  <input type="text" className="form-control" name="location" value={formData.location} onChange={handleChange} required />
+                </div>
 
-        <div className="sell-field">
-          <label>Photos (Max: 5)</label>
-          <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} />
-          <div className="photo-preview">
-            {formData.photos.map((photo, index) => (
-              <div key={index} className="photo-container">
-                <img src={URL.createObjectURL(photo)} alt="preview" />
-                <button
-                  type="button"
-                  className="remove-photo"
-                  onClick={() => removePhoto(index)}
-                >
-                  &times;
+                <div className="mb-3">
+                  <label className="form-label">Pincode</label>
+                  <input type="text" className="form-control" name="pincode" value={formData.pincode} onChange={handleChange} required />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Full Address (Optional)</label>
+                  <textarea className="form-control" name="fullAddress" value={formData.fullAddress} onChange={handleChange} rows="3" />
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label">Description</label>
+                  <textarea className="form-control" name="description" value={formData.description} onChange={handleChange} rows="3" required />
+                </div>
+
+                <div className="mb-4 form-check">
+                  <input type="checkbox" className="form-check-input" name="negotiable" checked={formData.negotiable} onChange={handleChange} />
+                  <label className="form-check-label">Price Negotiable</label>
+                </div>
+
+                <button type="submit" className="btn btn-primary btn-lg w-100" disabled={isLoading}>
+                  {isLoading ? "Listing Item..." : "List Item"}
                 </button>
-              </div>
-            ))}
+              </form>
+            </div>
           </div>
         </div>
-
-        <div className="sell-field">
-          <label>Condition</label>
-          <div>
-            {["New", "Like New", "Good", "Fair"].map((cond) => (
-              <label key={cond} className="condition-option">
-                <input
-                  type="radio"
-                  name="condition"
-                  value={cond}
-                  checked={formData.condition === cond}
-                  onChange={handleChange}
-                />
-                {cond}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="sell-field">
-          <label>Tags</label>
-          <input
-            type="text"
-            name="tags"
-            placeholder="Add tags separated by commas"
-            value={formData.tags}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="sell-field negotiable-field">
-          <label>
-            <input
-              type="checkbox"
-              name="negotiable"
-              checked={formData.negotiable}
-              onChange={handleChange}
-            />
-            Price Negotiable
-          </label>
-        </div>
-
-        <div className="sell-buttons">
-          <button type="submit" className="submit-btn">
-            List Item
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };

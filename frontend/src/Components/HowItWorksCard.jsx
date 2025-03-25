@@ -8,6 +8,7 @@ const HowItWorks = () => {
       icon: <UserPlus size={32} />,
       title: "Sign Up",
       description: "Create your account in seconds using your student email",
+      
     },
     {
       icon: <Camera size={32} />,

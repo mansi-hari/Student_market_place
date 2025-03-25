@@ -1,98 +1,109 @@
-.sell-container {
-  max-width: 600px;
-  margin: 50px auto;
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+.container {
+  max-width: 800px;
 }
 
-.sell-title {
+.card {
+  border-radius: 10px;
+}
+
+.card-body {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 30px;
+}
+
+h2 {
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 600;
+  margin-bottom: 20px;
   text-align: center;
+}
+
+.form-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.form-check-input {
+  margin-top: 5px;
+}
+
+.form-check-label {
+  font-size: 14px;
+  color: #333;
+}
+
+textarea.form-control {
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.mb-3 {
   margin-bottom: 20px;
 }
 
-.sell-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.mb-4 {
+  margin-bottom: 30px;
 }
 
-.sell-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.sell-field label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.sell-field input,
-.sell-field select,
-.sell-field textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-
-.sell-field textarea {
-  height: 100px;
-}
-
-.photo-preview {
-  display: flex;
-  gap: 10px;
+.mb-4 .form-check {
   margin-top: 10px;
-  flex-wrap: wrap;
 }
 
-.photo-container {
-  position: relative;
+button.btn {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
 }
 
-.photo-container img {
-  width: 80px;
-  height: 80px;
-  border-radius: 5px;
+button.btn:disabled {
+  background-color: #6c757d;
+}
+
+button.btn:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+button.btn:focus {
+  outline: none;
+}
+
+input[type="file"] {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+input[type="file"]:focus {
+  outline: none;
+}
+
+input[type="text"], input[type="number"] {
+  border-radius: 8px;
   border: 1px solid #ddd;
-}
-
-.remove-photo {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: red;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
+  padding: 10px;
   font-size: 14px;
-  cursor: pointer;
-}
-
-.negotiable-field {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.sell-buttons {
-  display: flex;
-  justify-content: flex-end; /* Align button to the right */
-}
-
-.submit-btn {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  font-size: 14px;
-  cursor: pointer;
-  background: #007bff;
-  color: white;
 }

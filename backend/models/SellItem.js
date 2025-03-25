@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const productSchema = new mongoose.Schema({
+const sellItemSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
@@ -22,6 +22,10 @@ const productSchema = new mongoose.Schema({
     enum: ["New", "Like New", "Good", "Fair"],
     default: "New",
   },
+  tags: {
+    type: [String],
+    required: false,
+  },
   location: {
     type: String,
     required: true,
@@ -30,24 +34,12 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  photos: [
-    {
-      url: String,
-      public_id: String,
-    },
-  ],
-  tags: {
-    type: String,
-    required: false,
+  photos: {
+    type: [String], // Array of file paths for photos
+    required: true,
   },
-  pincode: {
-    type: String,
-    required: false,
-  },
-  fullAddress: {
-    type: String,
-    required: false,
-  },
-}, { timestamps: true });
+});
 
-module.exports = mongoose.model('Product', productSchema);
+const SellItem = mongoose.model("SellItem", sellItemSchema);
+
+module.exports = SellItem;

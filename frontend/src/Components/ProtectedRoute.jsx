@@ -1,6 +1,6 @@
-"use client"
 import { Navigate, useLocation } from "react-router-dom"
 import { useAuth } from "../Context/AuthContext"
+import { useNavigate } from "react-router-dom"
 
 const ProtectedRoute = ({ children }) => {
   const { currentUser, loading } = useAuth()

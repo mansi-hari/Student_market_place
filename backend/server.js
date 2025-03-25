@@ -8,6 +8,7 @@ const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
 
+
 // ✅ Get Environment Variables
 const mongoURI = process.env.MONGODB_URI;
 const PORT = process.env.PORT || 5000;
@@ -19,9 +20,9 @@ const wishlistRoutes = require("./routes/wishlistRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const locationRoutes = require("./routes/locationRoutes");
+
 const { errorHandler } = require("./middleware/errorMiddleware.js");
-const Wishlist = require("./models/Wishlist.model.js");
-const Product = require("./models/Product.model.js");
+
 
 // ✅ Initialize Express App
 const app = express();
@@ -52,6 +53,7 @@ const statesAndCities = {
 app.get("/api/states", (req, res) => {
   res.json(statesAndCities);
 });
+app.use("/uploads", express.static("uploads"));
 
 // ✅ Wishlist Routes
 app.post("/api/wishlist", async (req, res) => {

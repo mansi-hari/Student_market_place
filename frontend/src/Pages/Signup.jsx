@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -51,7 +51,7 @@ const Signup = () => {
       localStorage.setItem("token", response.data.token); // Save the token in localStorage
       setSuccessMessage("Successfully signed up!");
       setTimeout(() => {
-        navigate("/HomePage"); // Redirect after 2 seconds
+        navigate("/"); // Redirect after 2 seconds
       }, 2000);
     } catch (error) {
       console.error("Signup error: ", error.response ? error.response.data : error);

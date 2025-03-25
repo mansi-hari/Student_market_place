@@ -1,88 +1,63 @@
-import { io } from 'socket.io-client';
+import io from "socket.io-client"
 
-let socket;
+let socket
 
 export const initializeSocket = (token) => {
-  if (!token) {
-    console.error("No token provided for socket initialization");
-  return null;
-}
-
-  // Close existing socket if it exists
   if (socket) {
-    socket.disconnect();
-    socket = null;
+    socket.disconnect()
   }
 
-  // Create new socket connection
-  socket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:5000', {
-    auth: { token },
-    transports: ["websocket"],
-  });
+  const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:5000"
 
-  // Socket event listeners
-  socket.on('connect', () => {
-    console.log('Socket connected');
-  });
+  socket = io(SOCKET_URL, {
+    auth: {
+      token,
+    },
+  })
 
-  socket.on('notification', (newNotification) => {
-    console.log('New notification received:', newNotification);
-  });
+  socket.on("connect", () => {
+    console.log("Connected to socket server")
+  })
 
-  socket.on('connect_error', (error) => {
-    console.error('Socket connection error:', error);
-    setTimeout(() => {
-      socket.connect();
-    }, 5000);
-  });
+  socket.on("connect_error", (err) => {
+    console.error("Socket connection error:", err)
+  })
 
-  socket.on("disconnect", () => {
-    console.log("Socket disconnected");
-  });
+  return socket
+}
 
-  return socket;
-};
+export const getSocket = () => {
+  if (!socket) {
+    const token = localStorage.getItem("token")
+    if (token) {
+      return initializeSocket(token)
+    }
+    return null
+  }
+  return socket
+}
 
-export const getSocket = () => socket;
+export const joinChatRoom = (roomId) => {
+  const socket = getSocket()
+  if (socket) {
+    socket.emit("join_room", roomId)
+  }
+}
+
+export const sendMessage = (roomId, message) => {
+  const socket = getSocket()
+  if (socket) {
+    socket.emit("send_message", {
+      conversationId: roomId,
+      ...message,
+    })
+  }
+}
 
 export const disconnectSocket = () => {
   if (socket) {
-    socket.disconnect();
-    socket = null;
-    console.log("Socket disconnected");
+    socket.disconnect()
+    socket = null
   }
-};
+}
 
-export const joinRoom = (roomId) => {
-  if (socket) {
-    socket.emit('join_room', roomId);
-  }
-};
-
-export const leaveRoom = (roomId) => {
-  if (socket) {
-    socket.emit('leave_room', roomId);
-  }
-};
-
-export const sendSocketMessage = (roomId, message) => {
-  if (socket) {
-    socket.emit('send_message', { conversationId: roomId, content: message });
-  }
-};
-
-export const emitTyping = (roomId, isTyping) => {
-  if (socket) {
-    socket.emit('typing', { conversationId: roomId, isTyping });
-  }
-};
-
-export default {
-  initializeSocket,
-  getSocket,
-  disconnectSocket,
-  joinRoom,
-  leaveRoom,
-  sendSocketMessage,
-  emitTyping
-};

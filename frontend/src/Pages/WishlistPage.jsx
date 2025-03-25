@@ -1,8 +1,6 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Heart, X, Mail, Phone } from "lucide-react";
+import { Heart, X, Mail, Phone, MessageSquare } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../Context/AuthContext";
 import api from "../utils/api"; // Import API functions
@@ -18,36 +16,36 @@ const WishlistPage = () => {
   // Fetch wishlist from API
   useEffect(() => {
     const fetchWishlist = async () => {
+      if (!currentUser) return; // Ensure user is logged in before fetching
       try {
         setIsLoading(true);
         const data = await api.getWishlist();
-        setWishlistItems(data);
+        setWishlistItems(Array.isArray(data) ? data : []);
       } catch (error) {
-        console.error("Error fetching wishlist:", error);
+        console.error("Error fetching wishlist:", error.response?.data || error.message);
         toast.error("Failed to load wishlist.");
+        setWishlistItems([]); // Prevents undefined issues
       } finally {
         setIsLoading(false);
       }
     };
+    
 
     fetchWishlist();
-  }, []);
+  }, [currentUser]); // Re-fetch wishlist when user changes
 
+  
   // Remove item from wishlist (API + State)
   const handleRemoveFromWishlist = async (item) => {
-    const itemId = item._id || item.id; // Handle both _id and id formats
+    const itemId = item._id || item.id;
     try {
       await api.removeFromWishlist(itemId);
-      setWishlistItems(wishlistItems.filter((i) => (i._id || i.id) !== itemId));
+      setWishlistItems((prev) => prev.filter((i) => (i._id || i.id) !== itemId));
       toast.success("Item removed from wishlist");
     } catch (error) {
-      console.error("Error removing from wishlist:", error);
+      console.error("Error removing from wishlist:", error.response?.data || error.message);
       toast.error("Failed to remove item.");
     }
-  };
-
-  const handleImageClick = (item) => {
-    setSelectedItem(item);
   };
 
   const handleContactSeller = (item) => {
@@ -63,6 +61,11 @@ const WishlistPage = () => {
   const handleCallSeller = (phone) => {
     window.location.href = `tel:${phone}`;
     toast.success("Initiating call...");
+  };
+
+  const handleChatWithSeller = (sellerId) => {
+    navigate(`/ChatComponent/${sellerId}`);
+    setShowContactModal(false);
   };
 
   if (isLoading) {
@@ -82,7 +85,7 @@ const WishlistPage = () => {
           <h2 className="text-xl font-semibold text-gray-600 mb-4">Your wishlist is empty</h2>
           <button
             onClick={() => navigate("/products")}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
           >
             Browse Products
           </button>
@@ -90,22 +93,22 @@ const WishlistPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {wishlistItems.map((item) => (
-            <div key={item._id || item.id} className="wishlist-card bg-white rounded-lg shadow-md overflow-hidden transform hover:scale-105 hover:shadow-lg transition duration-300">
-              <div className="relative h-48 cursor-pointer" onClick={() => handleImageClick(item)}>
+            <div key={item._id || item.id} className="bg-white rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105">
+              <div className="relative h-48 cursor-pointer" onClick={() => setSelectedItem(item)}>
                 <img src={item.image || "/placeholder.svg"} alt={item.title} className="w-full h-full object-cover" />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleRemoveFromWishlist(item);
                   }}
-                  className="btn-heart absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition-colors"
+                  className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-red-50 transition"
                 >
                   <Heart className="h-5 w-5 text-red-500" />
                 </button>
               </div>
 
               <div className="p-4">
-                <h3 className="text-lg font-semibold mb-2 line-clamp-2">{item.title}</h3>
+                <h3 className="text-lg font-semibold mb-2 truncate">{item.title}</h3>
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-2xl font-bold">₹{item.price.toLocaleString()}</span>
                   <span className="text-sm text-gray-500">{item.postedDate}</span>
@@ -114,7 +117,7 @@ const WishlistPage = () => {
                   <span className="text-sm text-gray-600">{item.condition}</span>
                   <button
                     onClick={() => handleContactSeller(item)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
                   >
                     Contact Seller
                   </button>
@@ -125,49 +128,54 @@ const WishlistPage = () => {
         </div>
       )}
 
-      {/* Contact Modal */}
       {showContactModal && selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Contact Seller</h2>
-                <button
-                  onClick={() => {
-                    setShowContactModal(false);
-                    setSelectedItem(null);
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-full"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h5 className="text-lg font-semibold">Contact Seller</h5>
+              <button className="text-gray-600 hover:text-gray-800" onClick={() => setShowContactModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
 
-              <div className="mb-4">
-                <h3 className="font-semibold mb-2">Seller Details</h3>
-                <p className="text-gray-600">{selectedItem.seller.name}</p>
-                <div className="flex items-center mt-1">
-                  <span className="text-yellow-400">★</span>
-                  <span className="ml-1">{selectedItem.seller.rating}</span>
-                </div>
+            <div className="flex items-center mb-3">
+              <img
+                src={selectedItem.seller?.profileImage || "/placeholder.svg"}
+                alt={selectedItem.seller?.name || "Seller"}
+                className="rounded-full w-12 h-12 mr-3"
+              />
+              <div>
+                <h6 className="font-semibold">{selectedItem.seller?.name || "Unknown Seller"}</h6>
+                {selectedItem.seller?.rating && (
+                  <div className="text-yellow-500 text-sm">★ {selectedItem.seller.rating}</div>
+                )}
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <button
-                  onClick={() => handleEmailSeller(selectedItem.seller.email)}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  <Mail className="h-5 w-5" />
-                  Email Seller
-                </button>
-                <button
-                  onClick={() => handleCallSeller(selectedItem.seller.phone)}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition-colors"
-                >
-                  <Phone className="h-5 w-5" />
-                  Call Seller
-                </button>
-              </div>
+            <div className="space-y-3">
+              <button
+                className="flex items-center justify-center gap-2 px-4 py-2 border rounded-md w-full text-blue-600 border-blue-600 hover:bg-blue-50"
+                onClick={() => handleEmailSeller(selectedItem.seller?.email)}
+              >
+                <Mail size={18} />
+                Email: {selectedItem.seller?.email || "Not Available"}
+              </button>
+
+              <button
+                className="flex items-center justify-center gap-2 px-4 py-2 border rounded-md w-full text-blue-600 border-blue-600 hover:bg-blue-50"
+                onClick={() => handleCallSeller(selectedItem.seller?.phone)}
+              >
+                <Phone size={18} />
+                Call: {selectedItem.seller?.phone || "Not Available"}
+              </button>
+
+              <button
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition w-full"
+                onClick={() => handleChatWithSeller(selectedItem.seller?.id)}
+              >
+                <MessageSquare size={18} />
+                Chat with Seller
+              </button>
             </div>
           </div>
         </div>

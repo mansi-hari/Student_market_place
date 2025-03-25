@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ProductCard from "../Components/ProductCard/ProductCard"; 
-import ChatComponent from "../Pages/ChatComponent"; // Ensure correct import path
+import ChatComponent from "./ChatPage"; // Ensure correct import path
 
 const ProductDetails = ({ product }) => {
   const [showChat, setShowChat] = useState(false);

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link, useLocation } from "react-router-dom"
 import { toast } from "react-hot-toast"
 import { initializeSocket } from "../utils/socket"; // Adjust the path as needed
 
@@ -10,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const location = useLocation()
   const navigate = useNavigate()
 
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"

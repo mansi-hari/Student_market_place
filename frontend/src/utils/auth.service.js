@@ -63,3 +63,36 @@ export const changePassword = async (passwordData) => {
   return response.data
 }
 
+
+export const sellItem = async (itemData) => {
+  const response = await api.post("/items/sell", itemData)
+
+  // Handle both response structures
+  const item = response.data.item || response.data.data?.item
+
+  if (item) {
+    localStorage.setItem("lastListedItem", JSON.stringify(item))
+  }
+
+  return response.data
+}
+export const fetchWishlist = async () => {
+  const response = await api.get("/wishlist")
+
+  // Handle both response structures
+  const wishlistItems = response.data.items || response.data.data?.items
+
+  return wishlistItems || []
+}
+
+export const addToWishlist = async (itemId) => {
+  const response = await api.post("/wishlist/add", { itemId })
+
+  return response.data
+}
+
+export const removeFromWishlist = async (itemId) => {
+  const response = await api.delete(`/wishlist/remove/${itemId}`)
+
+  return response.data
+}

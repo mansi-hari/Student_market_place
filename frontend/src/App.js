@@ -19,7 +19,7 @@ import ProductDetail from './Pages/ProductDetail';
 import ForgotPassword from './Pages/ForgotPassword';
 import Dashboard from './Pages/Dashboard';
 import Footer from './Components/Footer/Footer';
-import ChatPage from './Pages/ChatComponent';  // Import Chat Page
+import ChatPage from './Pages/ChatPage';  // Import Chat Page
 import './App.css';
 
 function App() {
@@ -75,10 +75,10 @@ const AppContent = () => {
         <Route path="/auth/signup" element={<Signup isSignup={true} />} />
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-        {/* Protected Routes */}
+        
         <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} />
-        <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
 
       {/* Footer remains at the bottom */}

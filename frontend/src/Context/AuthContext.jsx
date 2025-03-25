@@ -1,5 +1,3 @@
-"use client"
-
 import { createContext, useState, useEffect, useContext } from "react"
 import { getCurrentUser, login, logout, signup } from "../utils/auth.service"
 
