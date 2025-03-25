@@ -76,6 +76,8 @@ const AppContent = () => {
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
         
+        {/* <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} /> */}
+        {/* <Route path="/sell" element={<SellPage />}/> */}
         <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} />
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/dashboard" element={<Dashboard />} />

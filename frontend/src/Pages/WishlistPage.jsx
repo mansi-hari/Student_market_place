@@ -7,7 +7,7 @@ import api from "../utils/api"; // Import API functions
 
 const WishlistPage = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const currentUser = localStorage.getItem("user");
   const [wishlistItems, setWishlistItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [showContactModal, setShowContactModal] = useState(false);
