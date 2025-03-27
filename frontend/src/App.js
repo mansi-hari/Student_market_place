@@ -65,7 +65,7 @@ const AppContent = () => {
         <Route path="/products" element={<Browse />} />
         <Route path="/browse/:category" element={<Browse />} />
         <Route path="/products/:category" element={<CategoryPage />} />
-        <Route path="/product/:id" element={<ProductDetail />} />  {/* Fixed Route for Product Details */}
+        <Route path="/product/:productId" element={<ProductDetail />} />
 
         {/* Chat Page Route */}
         <Route path="/chat/:sellerId" element={<ChatPage />} />

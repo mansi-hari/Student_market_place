@@ -1,14 +1,10 @@
-import { useState, useEffect } from "react";
-import { toast } from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import axios from "axios";
-import "./SellPage.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"; // Import styles for toast notifications
+import './SellPage.css'; // Import the CSS file
 
 const SellPage = () => {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
-
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -17,89 +13,54 @@ const SellPage = () => {
     description: "",
     condition: "New",
     tags: "",
-    photos: [],
+    photos: null,
     location: "",
     pincode: "",
     fullAddress: "",
-    negotiable: false,
+    negotiable: false
   });
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/categories");
-        console.log("Fetched categories:", response.data);
-        setCategories(response.data);
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        toast.error("Failed to load categories");
-      }
-    };
-    fetchCategories();
-  }, []);
-
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
   };
 
-  const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length + formData.photos.length > 5) {
-      toast.error("You can upload a maximum of 5 photos");
-      return;
-    }
-    setFormData((prev) => ({
-      ...prev,
-      photos: [...prev.photos, ...files],
-    }));
-  };
-
-  const removePhoto = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      photos: prev.photos.filter((_, i) => i !== index),
-    }));
+  const handleFileChange = (e) => {
+    const filesArray = Array.from(e.target.files);
+    setFormData({
+      ...formData,
+      photos: filesArray
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    const formDataToSend = new FormData();
+
+    for (let key in formData) {
+      if (key === "photos" && Array.isArray(formData[key])) {
+        formData[key].forEach((file) => {
+          formDataToSend.append("photos", file);
+        });
+      } else {
+        formDataToSend.append(key, formData[key]);
+      }
+    }
 
     try {
-      const submissionData = new FormData();
-      submissionData.append("title", formData.title);
-      submissionData.append(
-        "category",
-        formData.category === "Others" ? formData.otherCategory : formData.category
-      );
-      submissionData.append("price", formData.price);
-      submissionData.append("description", formData.description);
-      submissionData.append("condition", formData.condition);
-      submissionData.append("tags", formData.tags);
-      submissionData.append("location", formData.location);
-      submissionData.append("pincode", formData.pincode);
-      submissionData.append("fullAddress", formData.fullAddress);
-      submissionData.append("negotiable", formData.negotiable);
-
-      formData.photos.forEach((photo) => {
-        submissionData.append("photos", photo);
-      });
-
-      const token = localStorage.getItem("token");
-
-      await axios.post("http://localhost:5000/api/products", submissionData, {
+      const response = await axios.post("http://localhost:5000/api/products", formDataToSend, {
         headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
+          'Content-Type': 'application/json',
+        }
       });
 
+      // Show success toast notification
       toast.success("Item listed successfully!");
 
+      // Reset form data after submission
       setFormData({
         title: "",
         category: "",
@@ -108,97 +69,190 @@ const SellPage = () => {
         description: "",
         condition: "New",
         tags: "",
-        photos: [],
+        photos: null,
         location: "",
         pincode: "",
         fullAddress: "",
-        negotiable: false,
+        negotiable: false
       });
-
-      navigate("/");
     } catch (error) {
-      console.error("Error listing item:", error);
-      toast.error(error.response?.data?.message || "Failed to list item. Please try again.");
-    } finally {
-      setIsLoading(false);
+      console.error("Error listing item", error);
+      toast.error("Error listing item!");
     }
   };
 
   return (
-    <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-lg-8">
-          <div className="card shadow">
-            <div className="card-body p-4">
-              <h2 className="text-center mb-4">List Your Item</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">Item Title</label>
-                  <input type="text" className="form-control" name="title" value={formData.title} onChange={handleChange} required />
-                </div>
+    <div className="sell-page-container container mt-5">
+      <h2>List Your Item</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="row mb-3">
+          <label htmlFor="title" className="form-label col-12">Title</label>
+          <input
+            type="text"
+            className="form-control col-12"
+            id="title"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Category</label>
-                  <select className="form-select" name="category" value={formData.category} onChange={handleChange} required>
-                    <option value="">Select a category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="category" className="form-label col-12">Category</label>
+          <select
+            className="form-select col-12 col-md-6"
+            id="category"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Books">Books</option>
+            <option value="Furniture">Furniture</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
 
-                {formData.category === "Others" && (
-                  <div className="mb-3">
-                    <label className="form-label">Specify Category</label>
-                    <input type="text" className="form-control" name="otherCategory" value={formData.otherCategory} onChange={handleChange} required />
-                  </div>
-                )}
+        {formData.category === "Others" && (
+          <div className="row mb-3">
+            <label htmlFor="otherCategory" className="form-label col-12">Other Category</label>
+            <input
+              type="text"
+              className="form-control col-12"
+              id="otherCategory"
+              name="otherCategory"
+              value={formData.otherCategory}
+              onChange={handleChange}
+            />
+          </div>
+        )}
 
-                <div className="mb-3">
-                  <label className="form-label">Price (₹)</label>
-                  <input type="number" className="form-control" name="price" value={formData.price} onChange={handleChange} required />
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="price" className="form-label col-12">Price</label>
+          <input
+            type="number"
+            className="form-control col-12 col-md-6"
+            id="price"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Photos (Max: 5)</label>
-                  <input type="file" className="form-control" accept="image/*" multiple onChange={handlePhotoUpload} />
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="description" className="form-label col-12">Description</label>
+          <textarea
+            className="form-control col-12"
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+          ></textarea>
+        </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Location</label>
-                  <input type="text" className="form-control" name="location" value={formData.location} onChange={handleChange} required />
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="condition" className="form-label col-12">Condition</label>
+          <select
+            className="form-select col-12 col-md-6"
+            id="condition"
+            name="condition"
+            value={formData.condition}
+            onChange={handleChange}
+          >
+            <option value="New">New</option>
+            <option value="Used">Used</option>
+          </select>
+        </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Pincode</label>
-                  <input type="text" className="form-control" name="pincode" value={formData.pincode} onChange={handleChange} required />
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="tags" className="form-label col-12">Tags</label>
+          <input
+            type="text"
+            className="form-control col-12"
+            id="tags"
+            name="tags"
+            value={formData.tags}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Full Address (Optional)</label>
-                  <textarea className="form-control" name="fullAddress" value={formData.fullAddress} onChange={handleChange} rows="3" />
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="photos" className="form-label col-12">Photos</label>
+          <input
+            type="file"
+            className="form-control col-12"
+            id="photos"
+            name="photos"
+            onChange={handleFileChange}
+            multiple
+          />
+        </div>
 
-                <div className="mb-3">
-                  <label className="form-label">Description</label>
-                  <textarea className="form-control" name="description" value={formData.description} onChange={handleChange} rows="3" required />
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="location" className="form-label col-12">Location</label>
+          <input
+            type="text"
+            className="form-control col-12 col-md-6"
+            id="location"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-                <div className="mb-4 form-check">
-                  <input type="checkbox" className="form-check-input" name="negotiable" checked={formData.negotiable} onChange={handleChange} />
-                  <label className="form-check-label">Price Negotiable</label>
-                </div>
+        <div className="row mb-3">
+          <label htmlFor="pincode" className="form-label col-12">Pincode</label>
+          <input
+            type="text"
+            className="form-control col-12 col-md-6"
+            id="pincode"
+            name="pincode"
+            value={formData.pincode}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-                <button type="submit" className="btn btn-primary btn-lg w-100" disabled={isLoading}>
-                  {isLoading ? "Listing Item..." : "List Item"}
-                </button>
-              </form>
-            </div>
+        <div className="row mb-3">
+          <label htmlFor="fullAddress" className="form-label col-12">Full Address (Optional)</label>
+          <input
+            type="text"
+            className="form-control col-12"
+            id="fullAddress"
+            name="fullAddress"
+            value={formData.fullAddress}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="row mb-3">
+          <div className="col-12 form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="negotiable"
+              name="negotiable"
+              checked={formData.negotiable}
+              onChange={(e) => setFormData({ ...formData, negotiable: e.target.checked })}
+            />
+            <label className="form-check-label" htmlFor="negotiable">Negotiable</label>
           </div>
         </div>
-      </div>
+
+        <div className="row mb-3">
+          <button type="submit" className="btn btn-primary col-12">List Item</button>
+        </div>
+      </form>
+
+      {/* ToastContainer to display the notifications */}
+      <ToastContainer />
     </div>
   );
 };

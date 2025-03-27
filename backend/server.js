@@ -5,7 +5,9 @@ require('dotenv').config({ path: './.env' });
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const axios =require("axios");
 const http = require("http");
+const multer = require("multer");
 const { Server } = require("socket.io");
 
 
@@ -54,6 +56,25 @@ app.get("/api/states", (req, res) => {
   res.json(statesAndCities);
 });
 app.use("/uploads", express.static("uploads"));
+
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+
+app.use(express.json());
+app.use("/uploads", express.static("uploads"));
+app.use(upload.array("photos"));
+app.use("/api", productRoutes);
+
 
 // ✅ Wishlist Routes
 app.post("/api/wishlist", async (req, res) => {

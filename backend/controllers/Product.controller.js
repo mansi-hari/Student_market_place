@@ -1,47 +1,32 @@
-const Product = require('../models/Product.model');
-const cloudinary = require('../utils/cloudinary');
-const { v4: uuidv4 } = require('uuid'); // To generate unique public_ids
+const Product = require("../models/Product.model");
 
-const createProduct = async (req, res) => {
-  const { title, category, price, description, condition, location, negotiable, tags, pincode, fullAddress } = req.body;
-  const photos = req.files.photos; // Multiple photos uploaded
-
+exports.createProduct = async (req, res) => {
   try {
-    const uploadedPhotos = [];
+    const { title, category, otherCategory, price, description, condition, tags, location, pincode, fullAddress, negotiable } = req.body;
 
-    for (const photo of photos) {
-      const result = await cloudinary.uploader.upload(photo.tempFilePath, {
-        folder: "student-marketplace/products", 
-      });
-
-      uploadedPhotos.push({
-        url: result.secure_url,
-        public_id: result.public_id,
-      });
-    }
+    // Handling photo uploads (if applicable)
+    const photos = req.files ? req.files.map(file => file.path) : [];
 
     const newProduct = new Product({
       title,
       category,
+      otherCategory,
       price,
       description,
       condition,
-      location,
-      negotiable,
       tags,
+      photos,
+      location,
       pincode,
       fullAddress,
-      photos: uploadedPhotos,
+      negotiable
     });
-
+    console.log(newProduct);
+    
     await newProduct.save();
-    res.status(201).json({ message: "Product created successfully", product: newProduct });
+    res.status(201).json({ message: "Item listed successfully!", product: newProduct });
   } catch (error) {
-    console.error("Error creating product:", error);
-    res.status(500).json({ message: "Internal server error", error });
+    console.error(error);
+    res.status(500).json({ message: "Server error, try again later!" });
   }
-};
-
-module.exports = {
-  createProduct,
 };
