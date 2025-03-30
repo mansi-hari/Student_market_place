@@ -1,6 +1,6 @@
 import React from 'react';
-
-import { UserPlus, Camera, ShoppingBag } from "lucide-react"
+import { UserPlus, Camera, ShoppingBag } from "lucide-react";
+import { Link } from 'react-router-dom'; // Import Link from react-router-dom
 
 const HowItWorks = () => {
   const steps = [
@@ -8,24 +8,28 @@ const HowItWorks = () => {
       icon: <UserPlus size={32} />,
       title: "Sign Up",
       description: "Create your account in seconds using your student email",
-      
+      link: "/auth/signup", // The path for the Sign Up page
     },
     {
       icon: <Camera size={32} />,
-      title: "List an Item",
+      title: "List Your Items",
       description: "Take photos and list your items for sale in minutes",
+      link: "/sell", // The path for the List Your Items page
     },
     {
       icon: <ShoppingBag size={32} />,
       title: "Buy & Sell",
       description: "Find great deals and chat with sellers on campus",
+      link: "/products", // The path for the Buy & Sell page
     },
-  ]
+  ];
 
   return (
     <section style={{ padding: "80px 0", backgroundColor: "white" }}>
       <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-        <h2 style={{ fontSize: "2rem", fontWeight: "700", color: "#2d3748", marginBottom: "60px" }}>How It Works</h2>
+        <h2 style={{ fontSize: "2rem", fontWeight: "700", color: "#2d3748", marginBottom: "60px" }}>
+          How It Works
+        </h2>
 
         <div
           style={{
@@ -69,7 +73,16 @@ const HowItWorks = () => {
                   color: "#2d3748",
                 }}
               >
-                {step.title}
+                <Link
+                  to={step.link} // Use the link for navigation
+                  style={{
+                    textDecoration: "none",
+                    color: "#2d3748",
+                    fontWeight: "600",
+                  }}
+                >
+                  {step.title}
+                </Link>
               </h3>
               <p
                 style={{
@@ -86,8 +99,7 @@ const HowItWorks = () => {
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default HowItWorks
-
+export default HowItWorks;

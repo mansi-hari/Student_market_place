@@ -1,31 +1,28 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { FaMapMarkerAlt, FaSearch, FaTimes } from "react-icons/fa"
-import { getPopularCities, searchLocations, saveSelectedLocation } from "../utils/locationService"
+import axios from "axios"
+import { toast } from "react-hot-toast"
+import { FaMapMarkerAlt, FaTimes, FaLocationArrow, FaSearch } from "react-icons/fa"
 import "./LocationSearch.css"
 
 const LocationSearch = ({ onLocationSelect, initialLocation }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
   const [locations, setLocations] = useState([])
-  const [popularCities, setPopularCities] = useState([])
-  const [selectedLocation, setSelectedLocation] = useState(initialLocation || null)
+  const [popularLocations, setPopularLocations] = useState([])
   const [loading, setLoading] = useState(false)
+  const [selectedLocation, setSelectedLocation] = useState(initialLocation)
+  const [userLocation, setUserLocation] = useState(null)
+  const [detectingLocation, setDetectingLocation] = useState(false)
   const dropdownRef = useRef(null)
-  const searchInputRef = useRef(null)
 
-  // Fetch popular cities on component mount
+  // Fetch popular locations on component mount
   useEffect(() => {
-    const fetchPopularCities = async () => {
-      const cities = await getPopularCities()
-      setPopularCities(cities)
-    }
-
-    fetchPopularCities()
+    fetchPopularLocations()
   }, [])
 
-  // Handle click outside to close dropdown
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -39,143 +36,250 @@ const LocationSearch = ({ onLocationSelect, initialLocation }) => {
     }
   }, [])
 
-  // Search for locations when query changes
+  // Fetch locations based on search term
   useEffect(() => {
-    const searchTimer = setTimeout(async () => {
-      if (searchQuery.trim()) {
-        setLoading(true)
-        const results = await searchLocations(searchQuery)
-        setLocations(results)
+    if (searchTerm.trim() === "") {
+      setLocations([])
+      return
+    }
+
+    const fetchLocations = async () => {
+      setLoading(true)
+      try {
+        const response = await axios.get(`http://localhost:5000/api/location/search?query=${searchTerm}`)
+        setLocations(response.data || [])
+      } catch (error) {
+        console.error("Error fetching locations:", error)
+        // Fallback to sample data if API fails
+        setLocations(getSampleLocations(searchTerm))
+      } finally {
         setLoading(false)
-      } else {
-        setLocations([])
       }
+    }
+
+    // Debounce the search
+    const timer = setTimeout(() => {
+      fetchLocations()
     }, 300)
 
-    return () => clearTimeout(searchTimer)
-  }, [searchQuery])
+    return () => clearTimeout(timer)
+  }, [searchTerm])
 
-  const handleLocationSelect = (location) => {
+  const fetchPopularLocations = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/location/popular")
+      setPopularLocations(response.data || [])
+    } catch (error) {
+      console.error("Error fetching popular locations:", error)
+      // Fallback to sample data
+      setPopularLocations([
+        { id: 1, name: "Delhi", pinCode: "110001", state: "Delhi" },
+        { id: 2, name: "Mumbai", pinCode: "400001", state: "Maharashtra" },
+        { id: 3, name: "Bangalore", pinCode: "560001", state: "Karnataka" },
+        { id: 4, name: "Pune", pinCode: "411001", state: "Maharashtra" },
+        { id: 5, name: "Hyderabad", pinCode: "500001", state: "Telangana" },
+      ])
+    }
+  }
+
+  // Sample locations for fallback
+  const getSampleLocations = (query) => {
+    const allLocations = [
+      { id: 1, name: "Delhi", pinCode: "110001", state: "Delhi" },
+      { id: 2, name: "Mumbai", pinCode: "400001", state: "Maharashtra" },
+      { id: 3, name: "Bangalore", pinCode: "560001", state: "Karnataka" },
+      { id: 4, name: "Chennai", pinCode: "600001", state: "Tamil Nadu" },
+      { id: 5, name: "Kolkata", pinCode: "700001", state: "West Bengal" },
+      { id: 6, name: "Hyderabad", pinCode: "500001", state: "Telangana" },
+      { id: 7, name: "Pune", pinCode: "411001", state: "Maharashtra" },
+      { id: 8, name: "Ahmedabad", pinCode: "380001", state: "Gujarat" },
+      { id: 9, name: "Jaipur", pinCode: "302001", state: "Rajasthan" },
+      { id: 10, name: "Lucknow", pinCode: "226001", state: "Uttar Pradesh" },
+    ]
+
+    return allLocations.filter(
+      (location) =>
+        location.name.toLowerCase().includes(query.toLowerCase()) ||
+        location.pinCode.includes(query) ||
+        location.state.toLowerCase().includes(query.toLowerCase()),
+    )
+  }
+
+  const handleLocationClick = (location) => {
     setSelectedLocation(location)
-    saveSelectedLocation(location)
     setIsOpen(false)
-    setSearchQuery("")
+    setSearchTerm("")
 
+    // Save to localStorage
+    localStorage.setItem("selectedLocation", JSON.stringify(location))
+
+    // Notify parent component
     if (onLocationSelect) {
       onLocationSelect(location)
     }
   }
 
-  // Allow users to add a custom location
-  const handleAddCustomLocation = () => {
-    if (!searchQuery.trim()) return
-
-    const customLocation = {
-      name: searchQuery,
-      state: "",
-      pinCode: searchQuery.replace(/\D/g, "").substring(0, 6) || "000000", // Extract numbers or use default
-      coordinates: { lat: 0, lng: 0 },
-    }
-
-    handleLocationSelect(customLocation)
-  }
-
-  const handleToggleDropdown = () => {
-    setIsOpen(!isOpen)
-    if (!isOpen && searchInputRef.current) {
-      setTimeout(() => {
-        searchInputRef.current.focus()
-      }, 100)
-    }
-  }
-
-  const handleClearLocation = (e) => {
+  const clearLocation = (e) => {
     e.stopPropagation()
     setSelectedLocation(null)
-    saveSelectedLocation(null)
 
+    // Remove from localStorage
+    localStorage.removeItem("selectedLocation")
+
+    // Notify parent component
     if (onLocationSelect) {
       onLocationSelect(null)
     }
+
+    toast.success("Location cleared")
+  }
+
+  const detectCurrentLocation = () => {
+    setDetectingLocation(true)
+
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser")
+      setDetectingLocation(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords
+
+          // Call reverse geocoding API
+          const response = await axios.get(
+            `http://localhost:5000/api/location/reverse-geocode?lat=${latitude}&lng=${longitude}`,
+          )
+
+          if (response.data) {
+            const location = response.data
+            setSelectedLocation(location)
+            localStorage.setItem("selectedLocation", JSON.stringify(location))
+
+            // Notify parent component
+            if (onLocationSelect) {
+              onLocationSelect(location)
+            }
+
+            toast.success(`Location set to ${location.name}`)
+          } else {
+            toast.error("Could not determine your location")
+          }
+        } catch (error) {
+          console.error("Error detecting location:", error)
+          toast.error("Failed to detect your location")
+
+          // Fallback to a sample location for demo purposes
+          const fallbackLocation = {
+            id: 999,
+            name: "Detected Location",
+            pinCode: "110001",
+            state: "Delhi",
+          }
+
+          setSelectedLocation(fallbackLocation)
+          localStorage.setItem("selectedLocation", JSON.stringify(fallbackLocation))
+
+          if (onLocationSelect) {
+            onLocationSelect(fallbackLocation)
+          }
+
+          toast.success(`Location set to ${fallbackLocation.name} (Demo)`)
+        } finally {
+          setDetectingLocation(false)
+          setIsOpen(false)
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error)
+        toast.error("Failed to detect your location. Please allow location access.")
+        setDetectingLocation(false)
+      },
+    )
   }
 
   return (
     <div className="location-search-container" ref={dropdownRef}>
-      <div className={`location-selector ${isOpen ? "active" : ""}`} onClick={handleToggleDropdown}>
+      <div className={`location-selector ${selectedLocation ? "has-location" : ""}`} onClick={() => setIsOpen(!isOpen)}>
         <FaMapMarkerAlt className="location-icon" />
-        <span className="location-text">{selectedLocation ? selectedLocation.name : "Select Location"}</span>
-        {selectedLocation && (
-          <button className="clear-location-btn" onClick={handleClearLocation} aria-label="Clear location">
-            <FaTimes />
-          </button>
+        {selectedLocation ? (
+          <div className="selected-location">
+            <span>{selectedLocation.name}</span>
+            <FaTimes className="clear-location" onClick={clearLocation} />
+          </div>
+        ) : (
+          <span>Select Location</span>
         )}
-        <span className="dropdown-arrow">▼</span>
       </div>
 
       {isOpen && (
         <div className="location-dropdown">
-          <div className="search-input-container">
+          <div className="location-search-header">
+            <h5>Select your location</h5>
+            <button className="detect-location-btn" onClick={detectCurrentLocation} disabled={detectingLocation}>
+              <FaLocationArrow className="location-arrow-icon" />
+              {detectingLocation ? "Detecting..." : "Detect my location"}
+            </button>
+          </div>
+
+          <div className="location-search-input">
             <FaSearch className="search-icon" />
             <input
-              ref={searchInputRef}
               type="text"
-              className="location-search-input"
-              placeholder="Search for your city..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search city or pincode"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
             />
           </div>
 
-          <div className="location-results">
-            {loading ? (
-              <div className="loading-indicator">
-                <div className="spinner"></div>
-                <span>Searching...</span>
-              </div>
-            ) : (
-              <>
-                {locations.length > 0 ? (
-                  <div className="location-list">
-                    <h4>Search Results</h4>
-                    <ul>
-                      {locations.map((location, index) => (
-                        <li key={`search-${index}`} onClick={() => handleLocationSelect(location)}>
-                          <FaMapMarkerAlt className="list-icon" />
-                          <div>
-                            <span className="location-name">{location.name}</span>
-                            {location.state && <span className="location-state">{location.state}</span>}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+          {searchTerm.trim() === "" ? (
+            <div className="popular-locations">
+              <h6>Popular Locations</h6>
+              <div className="popular-locations-grid">
+                {popularLocations.map((location) => (
+                  <div
+                    key={location.id}
+                    className="popular-location-item"
+                    onClick={() => handleLocationClick(location)}
+                  >
+                    <FaMapMarkerAlt className="location-marker" />
+                    <span>{location.name}</span>
                   </div>
-                ) : (
-                  <>
-                    {searchQuery && (
-                      <div className="custom-location-option">
-                        <p>Can't find your location?</p>
-                        <button className="custom-location-btn" onClick={handleAddCustomLocation}>
-                          Use "{searchQuery}" as my location
-                        </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="location-list">
+              {loading ? (
+                <div className="location-loading">
+                  <div className="spinner-border spinner-border-sm text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                  <span>Searching locations...</span>
+                </div>
+              ) : locations.length > 0 ? (
+                locations.map((location) => (
+                  <div key={location.id} className="location-item" onClick={() => handleLocationClick(location)}>
+                    <FaMapMarkerAlt className="location-item-icon" />
+                    <div className="location-details">
+                      <div className="location-name">{location.name}</div>
+                      <div className="location-pincode">
+                        {location.pinCode}, {location.state}
                       </div>
-                    )}
-
-                    <div className="popular-cities">
-                      <h4>Popular Cities</h4>
-                      <ul>
-                        {popularCities.map((city, index) => (
-                          <li key={`popular-${index}`} onClick={() => handleLocationSelect(city)}>
-                            <FaMapMarkerAlt className="list-icon" />
-                            <span className="location-name">{city.name}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-locations">
+                  <p>No locations found</p>
+                  <small>Try searching for a different city or pincode</small>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,16 +1,15 @@
-"use client"
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import "./Navbar.css";
+import LocationSearch from "../LocationSearch";
+import { getSelectedLocation, saveSelectedLocation } from "../../utils/locationService";
 
-import { useState, useEffect } from "react"
-import { Link, useNavigate, useLocation } from "react-router-dom"
-import { toast } from "react-hot-toast"
-import "./Navbar.css"
-import LocationSearch from "../LocationSearch"
-import { getSelectedLocation } from "../../utils/locationService"
 
-import logo from "../Assets/logo.png"
-import waterPurifierImage from "../Assets/water-purifier.png"
-import metalBedImage from "../Assets/metal-bed.png"
-import laptopImage from "../Assets/HpLaptop.png"
+import logo from "../Assets/logo.png";
+import waterPurifierImage from "../Assets/water-purifier.png";
+import metalBedImage from "../Assets/metal-bed.png";
+import laptopImage from "../Assets/HpLaptop.png";
 
 import {
   FaSearch,
@@ -25,116 +24,117 @@ import {
   FaMoneyCheckAlt,
   FaHeart,
   FaSignOutAlt,
-} from "react-icons/fa"
+} from "react-icons/fa";
 
 const Navbar = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [menu, setMenu] = useState("")
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [selectedLocation, setSelectedLocation] = useState(null)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [user, setUser] = useState(null)
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menu, setMenu] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState(null);
 
-  // Sample product data for search results
+  
+  // Sample product data for search results (you can replace this with real-time product data too)
   const products = [
     { id: 1, name: "Water Purifier", image: waterPurifierImage, price: "₹800/mo", originalPrice: "₹1479/mo" },
     { id: 2, name: "Napster Metal Queen Bed", image: metalBedImage, price: "₹1000/mo", originalPrice: "₹1500/mo" },
     { id: 3, name: "Hp Victus Laptop", image: laptopImage, price: "₹25000/mo", originalPrice: "₹30000/mo" },
-  ]
+  ];
 
   // Set active menu based on current path and check login status
   useEffect(() => {
-    const path = location.pathname
-    if (path === "/") setMenu("Home")
-    else if (path.includes("/products")) setMenu("Browse")
-    else if (path.includes("/sell")) setMenu("Sell")
-    else if (path.includes("/wishlist")) setMenu("Wishlist")
-    else setMenu("")
+    const path = location.pathname;
+    if (path === "/") setMenu("Home");
+    else if (path.includes("/products")) setMenu("Browse");
+    else if (path.includes("/sell")) setMenu("Sell");
+    else if (path.includes("/wishlist")) setMenu("Wishlist");
+    else setMenu("");
 
     // Check if user is logged in
-    const token = localStorage.getItem("token")
-    const userData = localStorage.getItem("user")
+    const token = localStorage.getItem("token");
+    const userData = localStorage.getItem("user");
 
     if (token && userData) {
-      setIsLoggedIn(true)
-      setUser(JSON.parse(userData))
+      setIsLoggedIn(true);
+      setUser(JSON.parse(userData));
     } else {
-      setIsLoggedIn(false)
-      setUser(null)
+      setIsLoggedIn(false);
+      setUser(null);
     }
 
     // Get selected location from localStorage
-    const savedLocation = getSelectedLocation()
+    const savedLocation = getSelectedLocation();
     if (savedLocation) {
-      setSelectedLocation(savedLocation)
+      setSelectedLocation(savedLocation);
     }
-  }, [location.pathname])
+  }, [location.pathname]);
 
-  // Fix the handleLocationSelect function to avoid confusion with the router location
+  // Handle location selection
   const handleLocationSelect = (selectedLoc) => {
-    setSelectedLocation(selectedLoc)
+    setSelectedLocation(selectedLoc);
+    saveSelectedLocation(selectedLoc); // Save to localStorage
 
     // Refresh products if we're on a product page
     if (location.pathname.includes("/products")) {
-      // We'll add the location filter to the current URL
-      const searchParams = new URLSearchParams(window.location.search)
+      const searchParams = new URLSearchParams(window.location.search);
 
       if (selectedLoc) {
-        searchParams.set("location", selectedLoc.pinCode)
+        searchParams.set("location", selectedLoc.pinCode || selectedLoc.latitude + "," + selectedLoc.longitude);
       } else {
-        searchParams.delete("location")
+        searchParams.delete("location");
       }
 
       navigate({
         pathname: location.pathname,
         search: searchParams.toString(),
-      })
+      });
     }
 
     if (selectedLoc) {
-      toast.success(`Location set to ${selectedLoc.name}`)
+      toast.success(`Location set to ${selectedLoc.name}`);
     }
-  }
+  };
 
   const handleSearchChange = (event) => {
-    setSearch(event.target.value)
-  }
+    setSearch(event.target.value);
+  };
 
   const handleSearchSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (search.trim()) {
-      const searchParams = new URLSearchParams()
-      searchParams.set("search", search)
+      const searchParams = new URLSearchParams();
+      searchParams.set("search", search);
 
       // Add location to search if selected
       if (selectedLocation) {
-        searchParams.set("location", selectedLocation.pinCode)
+        searchParams.set("location", selectedLocation.pinCode || selectedLocation.latitude + "," + selectedLocation.longitude);
       }
 
-      navigate(`/products?${searchParams.toString()}`)
-      setSearchOpen(false)
+      navigate(`/products?${searchParams.toString()}`);
+      setSearchOpen(false);
     }
-  }
+  };
 
   const handleProductClick = (productId) => {
-    navigate(`/products/${productId}`)
-    setSearchOpen(false)
-  }
+    navigate(`/products/${productId}`);
+    setSearchOpen(false);
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    localStorage.removeItem("user")
-    setIsLoggedIn(false)
-    setUser(null)
-    toast.success("Logged out successfully")
-    navigate("/")
-  }
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setIsLoggedIn(false);
+    setUser(null);
+    toast.success("Logged out successfully");
+    navigate("/");
+  };
 
   // Filter products based on the search term
-  const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(search.toLowerCase()))
+  const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="navbar-container">
@@ -167,18 +167,18 @@ const Navbar = () => {
                     key={item}
                     className="search-tag"
                     onClick={() => {
-                      setSearch(item)
+                      setSearch(item);
 
-                      const searchParams = new URLSearchParams()
-                      searchParams.set("search", item)
+                      const searchParams = new URLSearchParams();
+                      searchParams.set("search", item);
 
                       // Add location to search if selected
                       if (selectedLocation) {
-                        searchParams.set("location", selectedLocation.pinCode)
+                        searchParams.set("location", selectedLocation.pinCode || selectedLocation.latitude + "," + selectedLocation.longitude);
                       }
 
-                      navigate(`/products?${searchParams.toString()}`)
-                      setSearchOpen(false)
+                      navigate(`/products?${searchParams.toString()}`);
+                      setSearchOpen(false);
                     }}
                   >
                     {item}
@@ -332,13 +332,12 @@ const Navbar = () => {
         <div
           className="overlay"
           onClick={() => {
-            setSearchOpen(false)
+            setSearchOpen(false);
           }}
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Navbar
-
+export default Navbar;

@@ -13,6 +13,7 @@ import Signup from './Pages/Signup';
 import HomePage from './Pages/HomePage';
 import Browse from './Pages/Browse';
 import SellPage from './Pages/SellPage';
+import ProductPage from './Pages/ProductPage'; 
 import WishlistPage from './Pages/WishlistPage';
 import CategoryPage from './Pages/CategoryPage';
 import ProductDetail from './Pages/ProductDetail';
@@ -51,10 +52,10 @@ const AppContent = () => {
     <div>
       {/* Toaster for notifications */}
       <Toaster position="top-right" />
-
+     
       {/* Navbar remains fixed at the top */}
       <Navbar />
-
+     
       {/* Hero Section only appears on the HomePage */}
       {location.pathname === '/' && <Hero />}
 
@@ -64,8 +65,9 @@ const AppContent = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<Browse />} />
         <Route path="/browse/:category" element={<Browse />} />
-        <Route path="/products/:category" element={<CategoryPage />} />
+        <Route path="/products/category/:categoryName" element={<CategoryPage />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
+        
 
         {/* Chat Page Route */}
         <Route path="/chat/:sellerId" element={<ChatPage />} />
@@ -83,7 +85,7 @@ const AppContent = () => {
 
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
-
+      <ProductPage />
       {/* Footer remains at the bottom */}
       <Footer />
     </div>

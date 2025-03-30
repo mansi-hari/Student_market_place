@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 
 const CategoryCard = ({ icon, name, count, description, popularItems }) => {
