@@ -15,3 +15,4 @@ const ProductCard = ({ product, openChat }) => {
 };
 
 export default ProductCard;
+ 

@@ -5,7 +5,6 @@ import "./Navbar.css";
 import LocationSearch from "../LocationSearch";
 import { getSelectedLocation, saveSelectedLocation } from "../../utils/locationService";
 
-
 import logo from "../Assets/logo.png";
 import waterPurifierImage from "../Assets/water-purifier.png";
 import metalBedImage from "../Assets/metal-bed.png";
@@ -37,15 +36,12 @@ const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
 
-  
-  // Sample product data for search results (you can replace this with real-time product data too)
   const products = [
     { id: 1, name: "Water Purifier", image: waterPurifierImage, price: "₹800/mo", originalPrice: "₹1479/mo" },
     { id: 2, name: "Napster Metal Queen Bed", image: metalBedImage, price: "₹1000/mo", originalPrice: "₹1500/mo" },
     { id: 3, name: "Hp Victus Laptop", image: laptopImage, price: "₹25000/mo", originalPrice: "₹30000/mo" },
   ];
 
-  // Set active menu based on current path and check login status
   useEffect(() => {
     const path = location.pathname;
     if (path === "/") setMenu("Home");
@@ -54,7 +50,6 @@ const Navbar = () => {
     else if (path.includes("/wishlist")) setMenu("Wishlist");
     else setMenu("");
 
-    // Check if user is logged in
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
 
@@ -66,19 +61,16 @@ const Navbar = () => {
       setUser(null);
     }
 
-    // Get selected location from localStorage
     const savedLocation = getSelectedLocation();
     if (savedLocation) {
       setSelectedLocation(savedLocation);
     }
   }, [location.pathname]);
 
-  // Handle location selection
   const handleLocationSelect = (selectedLoc) => {
     setSelectedLocation(selectedLoc);
-    saveSelectedLocation(selectedLoc); // Save to localStorage
+    saveSelectedLocation(selectedLoc);
 
-    // Refresh products if we're on a product page
     if (location.pathname.includes("/products")) {
       const searchParams = new URLSearchParams(window.location.search);
 
@@ -109,13 +101,16 @@ const Navbar = () => {
       const searchParams = new URLSearchParams();
       searchParams.set("search", search);
 
-      // Add location to search if selected
       if (selectedLocation) {
-        searchParams.set("location", selectedLocation.pinCode || selectedLocation.latitude + "," + selectedLocation.longitude);
+        searchParams.set(
+          "location",
+          selectedLocation.pinCode || `${selectedLocation.latitude},${selectedLocation.longitude}`
+        );
       }
 
       navigate(`/products?${searchParams.toString()}`);
       setSearchOpen(false);
+      setSearch(""); // Clear search input after submission
     }
   };
 
@@ -133,29 +128,31 @@ const Navbar = () => {
     navigate("/");
   };
 
-  // Filter products based on the search term
-  const filteredProducts = products.filter((product) => product.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="navbar-container">
-      {/* Top Navigation Bar */}
       <div className="navbar-top">
         <div className="nav-logo">
           <Link to="/">
             <img src={logo || "/placeholder.svg"} alt="Logo" />
           </Link>
           <p>Student Marketplace</p>
-
-          {/* Location search component */}
           <LocationSearch onLocationSelect={handleLocationSelect} initialLocation={selectedLocation} />
         </div>
 
-        {/* Search Bar */}
         <div className="search-bar-container">
           <form onSubmit={handleSearchSubmit} className="search-form">
             <div className="search-bar" onClick={() => setSearchOpen(true)}>
               <FaSearch className="search-icon" />
-              <input type="text" placeholder="Search for products" value={search} onChange={handleSearchChange} />
+              <input
+                type="text"
+                placeholder="Search for products"
+                value={search}
+                onChange={handleSearchChange}
+              />
             </div>
           </form>
           {searchOpen && (
@@ -168,15 +165,14 @@ const Navbar = () => {
                     className="search-tag"
                     onClick={() => {
                       setSearch(item);
-
                       const searchParams = new URLSearchParams();
                       searchParams.set("search", item);
-
-                      // Add location to search if selected
                       if (selectedLocation) {
-                        searchParams.set("location", selectedLocation.pinCode || selectedLocation.latitude + "," + selectedLocation.longitude);
+                        searchParams.set(
+                          "location",
+                          selectedLocation.pinCode || selectedLocation.latitude + "," + selectedLocation.longitude
+                        );
                       }
-
                       navigate(`/products?${searchParams.toString()}`);
                       setSearchOpen(false);
                     }}
@@ -201,7 +197,6 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Navigation Buttons */}
         <div className="nav-top-options">
           <Link to="/wishlist" className="nav-item">
             <FaHeart className="nav-icon" />
@@ -214,7 +209,6 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Bottom Navigation Bar */}
       <div className="navbar-bottom">
         <ul className="nav-menu">
           <li className="menu-item" onClick={() => setIsSidebarOpen(true)}>
@@ -260,7 +254,6 @@ const Navbar = () => {
         </ul>
       </div>
 
-      {/* Sidebar Menu */}
       {isSidebarOpen && (
         <div className="sidebar">
           <div className="sidebar-header">
@@ -327,7 +320,6 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Overlay for closing dropdowns */}
       {searchOpen && (
         <div
           className="overlay"

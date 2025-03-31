@@ -1,37 +1,36 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useParams, useNavigate, Link } from "react-router-dom"
-import { Heart, Grid, List, MapPin, X, MessageCircle, Phone, Mail } from "lucide-react"
-import axios from "axios"
-import { toast } from "react-hot-toast"
-import "./Browse.css"
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { Heart, Grid, List, MapPin, X, MessageCircle, Phone, Mail } from "lucide-react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import "./Browse.css";
 
 const Browse = () => {
-  const navigate = useNavigate()
-  const [viewMode, setViewMode] = useState("grid")
-  const [favorites, setFavorites] = useState([])
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [selectedState, setSelectedState] = useState("")
-  const [selectedCity, setSelectedCity] = useState("")
-  const [sortOption, setSortOption] = useState("newest")
-  const [displayProducts, setDisplayProducts] = useState([])
-  const [allProducts, setAllProducts] = useState([])
-  const [categoryTitle, setCategoryTitle] = useState("All Products")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [showContactInfo, setShowContactInfo] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [priceRange, setPriceRange] = useState({ min: "", max: "" })
+  const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState("grid");
+  const [favorites, setFavorites] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [sortOption, setSortOption] = useState("newest");
+  const [displayProducts, setDisplayProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [categoryTitle, setCategoryTitle] = useState("All Products");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [selectedConditions, setSelectedConditions] = useState({
     New: false,
     "Like New": false,
     Good: false,
     Used: false,
-  })
+  });
 
-  // Get category from URL parameters
-  const { category } = useParams()
+  const { category } = useParams();
 
   const statesAndCities = {
     Maharashtra: ["Mumbai", "Pune", "Nagpur"],
@@ -42,188 +41,235 @@ const Browse = () => {
     "West Bengal": ["Kolkata", "Durgapur"],
     Gujarat: ["Ahmedabad", "Surat"],
     Rajasthan: ["Jaipur", "Udaipur"],
-  }
+  };
 
-  // Load products and check login status
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    setIsLoggedIn(!!token)
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
 
-    // Load favorites from localStorage
-    const savedFavorites = JSON.parse(localStorage.getItem("wishlist") || "[]")
-    setFavorites(savedFavorites)
+    const savedFavorites = JSON.parse(localStorage.getItem("wishlist") || "[]");
+    setFavorites(savedFavorites);
 
-    fetchProducts()
-  }, [category])
+    fetchProducts();
+  }, [category, window.location.search]); // Added window.location.search to trigger on search/location changes
 
-  // Fetch products based on category
   const fetchProducts = async () => {
     try {
-      setLoading(true)
-      let url = "http://localhost:5000/api/products"
+      setLoading(true);
+      let url = "http://localhost:5000/api/products";
+
+      // Get search and location from URL query parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchTerm = urlParams.get("search") || "";
+      const locationTerm = urlParams.get("location") || "";
+
+      const queryParams = new URLSearchParams();
+      if (searchTerm) queryParams.set("search", searchTerm);
+      if (locationTerm) queryParams.set("location", locationTerm);
 
       if (category) {
-        url = `http://localhost:5000/api/products/category/${category}`
-        // Set a formatted title for the category
-        const formattedCategory = category.charAt(0).toUpperCase() + category.slice(1)
-        setCategoryTitle(formattedCategory)
-      } else {
-        setCategoryTitle("All Products")
+        url = `http://localhost:5000/api/products/category/${category}`;
       }
 
-      const response = await axios.get(url)
-      console.log("Products fetched:", response.data)
+      if (queryParams.toString()) {
+        url += `?${queryParams.toString()}`;
+      }
+
+      const response = await axios.get(url);
+      console.log("Products fetched:", response.data);
 
       if (Array.isArray(response.data)) {
-        setAllProducts(response.data)
-        applyFilters(response.data)
+        setAllProducts(response.data);
+        applyFilters(response.data);
       } else {
-        console.error("Invalid data format received:", response.data)
-        setError("Invalid data format received from server")
+        console.error("Invalid data format received:", response.data);
+        setError("Invalid data format received from server");
       }
 
-      setLoading(false)
+      setLoading(false);
     } catch (err) {
-      console.error("Error fetching products:", err)
-      setError("Failed to load products")
-      setLoading(false)
-      toast.error("Failed to load products")
+      console.error("Error fetching products:", err);
+      setError("Failed to load products");
+      setLoading(false);
+      toast.error("Failed to load products");
     }
-  }
+  };
 
-  // Apply filters and sorting
   const applyFilters = (products = allProducts) => {
-    let filteredProducts = [...products]
+    let filteredProducts = [...products];
 
-    // Filter by location
     if (selectedState) {
       filteredProducts = filteredProducts.filter(
-        (product) => product.location && product.location.includes(selectedState),
-      )
+        (product) => product.location && product.location.includes(selectedState)
+      );
 
       if (selectedCity) {
         filteredProducts = filteredProducts.filter(
-          (product) => product.location && product.location.includes(selectedCity),
-        )
+          (product) => product.location && product.location.includes(selectedCity)
+        );
       }
     }
 
-    // Filter by price range
     if (priceRange.min !== "") {
-      filteredProducts = filteredProducts.filter((product) => product.price >= Number(priceRange.min))
+      filteredProducts = filteredProducts.filter((product) => product.price >= Number(priceRange.min));
     }
 
     if (priceRange.max !== "") {
-      filteredProducts = filteredProducts.filter((product) => product.price <= Number(priceRange.max))
+      filteredProducts = filteredProducts.filter((product) => product.price <= Number(priceRange.max));
     }
 
-    // Filter by condition
-    const selectedConditionsList = Object.keys(selectedConditions).filter((condition) => selectedConditions[condition])
+    const selectedConditionsList = Object.keys(selectedConditions).filter(
+      (condition) => selectedConditions[condition]
+    );
 
     if (selectedConditionsList.length > 0) {
-      filteredProducts = filteredProducts.filter((product) => selectedConditionsList.includes(product.condition))
+      filteredProducts = filteredProducts.filter((product) =>
+        selectedConditionsList.includes(product.condition)
+      );
     }
 
-    // Apply sorting
     switch (sortOption) {
       case "price-low":
-        filteredProducts.sort((a, b) => a.price - b.price)
-        break
+        filteredProducts.sort((a, b) => a.price - b.price);
+        break;
       case "price-high":
-        filteredProducts.sort((a, b) => b.price - a.price)
-        break
+        filteredProducts.sort((a, b) => b.price - b.price);
+        break;
       case "newest":
       default:
-        filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
-    setDisplayProducts(filteredProducts)
-  }
+    setDisplayProducts(filteredProducts);
+  };
 
-  // Handle price range changes
   const handlePriceChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setPriceRange((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
-  // Handle condition checkbox changes
   const handleConditionChange = (condition) => {
     setSelectedConditions((prev) => ({
       ...prev,
       [condition]: !prev[condition],
-    }))
-  }
+    }));
+  };
 
-  // Apply filters when filter values change
   useEffect(() => {
-    applyFilters()
-  }, [selectedState, selectedCity, priceRange, selectedConditions, sortOption])
+    applyFilters();
+  }, [selectedState, selectedCity, priceRange, selectedConditions, sortOption]);
 
-  // Toggle favorite status
-  const toggleFavorite = (product, e) => {
-    e.stopPropagation()
+  const toggleFavorite = async (product, e) => {
+    e.stopPropagation();
 
-    if (!isLoggedIn) {
-      toast.error("Please login to add items to your wishlist")
-      navigate("/auth/login")
-      return
+    const token = localStorage.getItem("token");
+
+    if (!isLoggedIn || !token) {
+      toast.error("Please login to add items to your wishlist");
+      navigate("/auth/login");
+      return;
     }
 
-    const isInFavorites = favorites.some((item) => item._id === product._id)
+    const isInFavorites = favorites.some((item) => item._id === product._id);
 
-    if (isInFavorites) {
-      // Remove from favorites
-      const updatedFavorites = favorites.filter((item) => item._id !== product._id)
-      setFavorites(updatedFavorites)
-      localStorage.setItem("wishlist", JSON.stringify(updatedFavorites))
-      toast.success(`${product.title} removed from wishlist`)
-    } else {
-      // Add to favorites
-      const updatedFavorites = [...favorites, product]
-      setFavorites(updatedFavorites)
-      localStorage.setItem("wishlist", JSON.stringify(updatedFavorites))
-      toast.success(`${product.title} added to wishlist`)
+    try {
+      if (isInFavorites) {
+        const response = await axios.delete(`http://localhost:5000/api/wishlist/${product._id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          const updatedFavorites = favorites.filter((item) => item._id !== product._id);
+          setFavorites(updatedFavorites);
+          toast.success(`${product.title} removed from wishlist`);
+        }
+      } else {
+        const response = await axios.post(
+          `http://localhost:5000/api/wishlist/${product._id}`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.success) {
+          const updatedFavorites = [...favorites, product];
+          setFavorites(updatedFavorites);
+          toast.success(`${product.title} added to wishlist`);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error);
+      toast.error("Failed to update wishlist");
     }
-  }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+
+    const fetchWishlist = async () => {
+      if (!token) return;
+
+      try {
+        const response = await axios.get("http://localhost:5000/api/wishlist", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.data.success) {
+          setFavorites(response.data.data.products);
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist:", error);
+      }
+    };
+
+    fetchWishlist();
+    fetchProducts();
+  }, [category]);
 
   const handleImageClick = (product) => {
-    setSelectedProduct(product)
-    setShowContactInfo(false)
-  }
+    setSelectedProduct(product);
+    setShowContactInfo(false);
+  };
 
   const closeOptions = () => {
-    setSelectedProduct(null)
-    setShowContactInfo(false)
-  }
+    setSelectedProduct(null);
+    setShowContactInfo(false);
+  };
 
   const handleContactSeller = () => {
     if (!isLoggedIn) {
-      toast.error("Please login to contact the seller")
-      navigate("/auth/login")
-      return
+      toast.error("Please login to contact the seller");
+      navigate("/auth/login");
+      return;
     }
 
-    setShowContactInfo(true)
-  }
+    setShowContactInfo(true);
+  };
 
   const handleStartChat = (sellerId) => {
     if (!isLoggedIn) {
-      toast.error("Please login to chat with the seller")
-      navigate("/auth/login")
-      return
+      toast.error("Please login to chat with the seller");
+      navigate("/auth/login");
+      return;
     }
 
-    // Navigate to chat page with seller ID
-    navigate(`/chat/${sellerId}`)
-  }
+    navigate(`/chat/${sellerId}`);
+  };
 
-  // Check if a product is in favorites
   const isInFavorites = (productId) => {
-    return favorites.some((item) => item._id === productId)
-  }
+    return favorites.some((item) => item._id === productId);
+  };
 
   if (loading) {
     return (
@@ -233,7 +279,7 @@ const Browse = () => {
         </div>
         <p className="mt-3">Loading products...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -243,7 +289,7 @@ const Browse = () => {
           {error}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -321,16 +367,16 @@ const Browse = () => {
         <button
           className="btn btn-outline-secondary w-100 mt-3"
           onClick={() => {
-            setSelectedState("")
-            setSelectedCity("")
-            setPriceRange({ min: "", max: "" })
+            setSelectedState("");
+            setSelectedCity("");
+            setPriceRange({ min: "", max: "" });
             setSelectedConditions({
               New: false,
               "Like New": false,
               Good: false,
               Used: false,
-            })
-            applyFilters()
+            });
+            applyFilters();
           }}
         >
           Reset Filters
@@ -372,8 +418,8 @@ const Browse = () => {
                       src={`http://localhost:5000/uploads/${product.photos[0]}`}
                       alt={product.title}
                       onError={(e) => {
-                        e.target.onerror = null
-                        e.target.src = "https://via.placeholder.com/200"
+                        e.target.onerror = null;
+                        e.target.src = "https://via.placeholder.com/200";
                       }}
                     />
                   ) : (
@@ -431,8 +477,8 @@ const Browse = () => {
                   src={`http://localhost:5000/uploads/${selectedProduct.photos[0]}`}
                   alt={selectedProduct.title}
                   onError={(e) => {
-                    e.target.onerror = null
-                    e.target.src = "https://via.placeholder.com/400"
+                    e.target.onerror = null;
+                    e.target.src = "https://via.placeholder.com/400";
                   }}
                 />
               ) : (
@@ -495,8 +541,7 @@ const Browse = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Browse
-
+export default Browse;

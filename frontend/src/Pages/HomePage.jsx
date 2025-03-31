@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import axios from "axios"
@@ -159,47 +161,75 @@ const HomePage = () => {
     const token = localStorage.getItem("token")
     setIsLoggedIn(!!token)
 
-    // Load wishlist from localStorage
-    const savedWishlist = localStorage.getItem("wishlist")
-    if (savedWishlist) {
-      setWishlist(JSON.parse(savedWishlist) || [])
+    // Fetch wishlist if user is logged in
+    if (token) {
+      fetchWishlist(token)
     }
   }, [])
 
-  // Save wishlist to localStorage whenever it changes
-  useEffect(() => {
-    return () => {
-      localStorage.setItem("wishlist", JSON.stringify(wishlist))
+  // Fetch wishlist from API
+  const fetchWishlist = async (token) => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/wishlist", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (response.data.success) {
+        // Extract product IDs from the wishlist
+        const wishlistProductIds = response.data.data.products.map((product) => product._id)
+        setWishlist(wishlistProductIds)
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist:", error)
     }
-  }, [])
+  }
 
   // Function to get products by category
   const getProductsByCategory = (categoryName) => {
     return products.filter((product) => product.category === categoryName)
   }
 
-  const handleAddToWishlist = (product, e) => {
+  const handleAddToWishlist = async (product, e) => {
     e.stopPropagation() // Prevent the product click event
 
     // Check if user is logged in
-    if (!isLoggedIn) {
+    const token = localStorage.getItem("token")
+    if (!isLoggedIn || !token) {
       toast.error("Please login to add items to your wishlist")
       navigate("/auth/login")
       return
     }
 
     // Check if product is already in wishlist
-    const isInWishlist = wishlist.some((item) => item._id === product._id)
+    const isInWishlist = wishlist.includes(product._id)
 
-    if (isInWishlist) {
-      // Remove from wishlist
-      const updatedWishlist = wishlist.filter((item) => item._id !== product._id)
-      setWishlist(updatedWishlist)
-      toast.success(`${product.title} removed from wishlist`)
-    } else {
-      // Add to wishlist
-      setWishlist([...wishlist, product])
-      toast.success(`${product.title} added to wishlist`)
+    try {
+      if (isInWishlist) {
+        // Remove from wishlist
+        await axios.delete(`http://localhost:5000/api/wishlist/${product._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        // Update local state
+        setWishlist(wishlist.filter((id) => id !== product._id))
+        toast.success(`${product.title} removed from wishlist`)
+      } else {
+        // Add to wishlist
+        await axios.post(
+          `http://localhost:5000/api/wishlist/${product._id}`,
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        )
+
+        // Update local state
+        setWishlist([...wishlist, product._id])
+        toast.success(`${product.title} added to wishlist`)
+      }
+    } catch (error) {
+      console.error("Error updating wishlist:", error)
+      toast.error("Failed to update wishlist")
     }
   }
 
@@ -236,7 +266,7 @@ const HomePage = () => {
 
   // Check if a product is in the wishlist
   const isInWishlist = (productId) => {
-    return wishlist.some((item) => item._id === productId)
+    return wishlist.includes(productId)
   }
 
   const StarRating = ({ rating }) => {

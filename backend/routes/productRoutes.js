@@ -21,5 +21,4 @@ router.get("/products-by-category", productController.getProductsGroupedByCatego
 // Get product by ID
 router.get("/products/:id", productController.getProductById);
 
-
 module.exports = router;

@@ -18,10 +18,16 @@ import WishlistPage from './Pages/WishlistPage';
 import CategoryPage from './Pages/CategoryPage';
 import ProductDetail from './Pages/ProductDetail';
 import ForgotPassword from './Pages/ForgotPassword';
-import Dashboard from './Pages/Dashboard';
+import Dashboard from './Pages/Dashboard/UserDashboard';
 import Footer from './Components/Footer/Footer';
 import ChatPage from './Pages/ChatPage';  // Import Chat Page
 import './App.css';
+import AdminPanel from './Pages/AdminPanel';
+
+// Add these imports
+
+import UserDashboard from "./Pages/Dashboard/UserDashboard"
+import ProfilePage from "./Pages/ProfilePage"
 
 function App() {
   const token = localStorage.getItem('token'); // Get token from localStorage
@@ -84,6 +90,10 @@ const AppContent = () => {
         <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
 
         <Route path="/dashboard" element={<Dashboard />} />
+        {/* Add these routes to your Routes component */}
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/profile/:userId" element={<ProfilePage />} />
       </Routes>
       <ProductPage />
       {/* Footer remains at the bottom */}
