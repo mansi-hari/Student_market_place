@@ -64,7 +64,7 @@ app.get("/api/states", (req, res) => {
   res.json(statesAndCities);
 });
 
-// API Routes - IMPORTANT: Don't use global upload middleware
+
 app.use("/api", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/wishlist", wishlistRoutes);

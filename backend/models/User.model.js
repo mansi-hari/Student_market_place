@@ -18,7 +18,16 @@ const userSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     location: {
       formatted: { type: String, default: "" },
-      pinCode: { type: String, required: true },
+      pinCode: {
+        type: String,
+        required: true,
+        validate: {
+          validator: function (v) {
+            return v === "201007";
+          },
+          message: "This service is only available for Mohan Nagar, Ghaziabad (PIN: 201007).",
+        },
+      },
       address: {
         street: { type: String, default: "" },
         city: { type: String, default: "" },
