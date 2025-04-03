@@ -2,14 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import "./Navbar.css";
-import LocationSearch from "../LocationSearch";
-import { getSelectedLocation, saveSelectedLocation } from "../../utils/locationService";
-
 import logo from "../Assets/logo.png";
-import waterPurifierImage from "../Assets/water-purifier.png";
-import metalBedImage from "../Assets/metal-bed.png";
-import laptopImage from "../Assets/HpLaptop.png";
-
 import {
   FaSearch,
   FaStore,
@@ -23,24 +16,20 @@ import {
   FaMoneyCheckAlt,
   FaHeart,
   FaSignOutAlt,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
+import { colleges } from "../../utils/colleges"; // Importing colleges from utils
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [menu, setMenu] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [locationInput, setLocationInput] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-
-  const products = [
-    { id: 1, name: "Water Purifier", image: waterPurifierImage, price: "₹800/mo", originalPrice: "₹1479/mo" },
-    { id: 2, name: "Napster Metal Queen Bed", image: metalBedImage, price: "₹1000/mo", originalPrice: "₹1500/mo" },
-    { id: 3, name: "Hp Victus Laptop", image: laptopImage, price: "₹25000/mo", originalPrice: "₹30000/mo" },
-  ];
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     const path = location.pathname;
@@ -60,35 +49,25 @@ const Navbar = () => {
       setIsLoggedIn(false);
       setUser(null);
     }
-
-    const savedLocation = getSelectedLocation();
-    if (savedLocation) {
-      setSelectedLocation(savedLocation);
-    }
   }, [location.pathname]);
 
-  const handleLocationSelect = (selectedLoc) => {
-    setSelectedLocation(selectedLoc);
-    saveSelectedLocation(selectedLoc);
+  const handleLocationChange = (event) => {
+    const value = event.target.value;
+    setLocationInput(value);
 
-    if (location.pathname.includes("/products")) {
-      const searchParams = new URLSearchParams(window.location.search);
-
-      if (selectedLoc) {
-        searchParams.set("location", selectedLoc.pinCode || selectedLoc.latitude + "," + selectedLoc.longitude);
-      } else {
-        searchParams.delete("location");
-      }
-
-      navigate({
-        pathname: location.pathname,
-        search: searchParams.toString(),
-      });
+    if (value.trim()) {
+      const filteredSuggestions = colleges.filter((college) =>
+        college.toLowerCase().includes(value.toLowerCase())
+      );
+      setSuggestions(filteredSuggestions);
+    } else {
+      setSuggestions([]);
     }
+  };
 
-    if (selectedLoc) {
-      toast.success(`Location set to ${selectedLoc.name}`);
-    }
+  const handleSuggestionClick = (suggestion) => {
+    setLocationInput(suggestion);
+    setSuggestions([]);
   };
 
   const handleSearchChange = (event) => {
@@ -100,23 +79,15 @@ const Navbar = () => {
     if (search.trim()) {
       const searchParams = new URLSearchParams();
       searchParams.set("search", search);
-
-      if (selectedLocation) {
-        searchParams.set(
-          "location",
-          selectedLocation.pinCode || `${selectedLocation.latitude},${selectedLocation.longitude}`
-        );
+      if (locationInput && locationInput !== "Select University") {
+        searchParams.set("college", locationInput);
       }
-
       navigate(`/products?${searchParams.toString()}`);
-      setSearchOpen(false);
-      setSearch(""); // Clear search input after submission
+      setSearch("");
+      setLocationInput(""); // Clear location input after search
+    } else {
+      toast.error("Please enter a search term");
     }
-  };
-
-  const handleProductClick = (productId) => {
-    navigate(`/products/${productId}`);
-    setSearchOpen(false);
   };
 
   const handleLogout = () => {
@@ -128,10 +99,6 @@ const Navbar = () => {
     navigate("/");
   };
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <div className="navbar-container">
       <div className="navbar-top">
@@ -139,62 +106,50 @@ const Navbar = () => {
           <Link to="/">
             <img src={logo || "/placeholder.svg"} alt="Logo" />
           </Link>
-          <p>Student Marketplace</p>
-          <LocationSearch onLocationSelect={handleLocationSelect} initialLocation={selectedLocation} />
+          <div className="logo-text">
+            <p>Student Marketplace</p>
+            <p className="location-text">MOHAN NAGAR</p>
+          </div>
+        </div>
+
+        <div className="location-search-container">
+          <div className="location-placeholder">
+            <FaMapMarkerAlt className="location-icon" />
+            <input
+              type="text"
+              placeholder="Select your college"
+              value={locationInput}
+              onChange={handleLocationChange}
+              className="location-input"
+            />
+            {suggestions.length > 0 && (
+              <ul className="suggestions-list">
+                {suggestions.map((suggestion, index) => (
+                  <li
+                    key={index} // Using index as key since colleges array doesn't have unique IDs
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="suggestion-item"
+                  >
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         <div className="search-bar-container">
           <form onSubmit={handleSearchSubmit} className="search-form">
-            <div className="search-bar" onClick={() => setSearchOpen(true)}>
+            <div className="search-bar">
               <FaSearch className="search-icon" />
               <input
                 type="text"
-                placeholder="Search for products"
+                placeholder="Search in Mohan Nagar colleges"
                 value={search}
                 onChange={handleSearchChange}
               />
             </div>
           </form>
-          {searchOpen && (
-            <div className="search-dropdown">
-              <h4>Popular Searches</h4>
-              <div className="search-tags">
-                {["Bed", "Washing Machine", "Fridge", "Air Conditioner", "Mattress", "Cooler"].map((item) => (
-                  <span
-                    key={item}
-                    className="search-tag"
-                    onClick={() => {
-                      setSearch(item);
-                      const searchParams = new URLSearchParams();
-                      searchParams.set("search", item);
-                      if (selectedLocation) {
-                        searchParams.set(
-                          "location",
-                          selectedLocation.pinCode || selectedLocation.latitude + "," + selectedLocation.longitude
-                        );
-                      }
-                      navigate(`/products?${searchParams.toString()}`);
-                      setSearchOpen(false);
-                    }}
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-              <h4>Top Selling Products</h4>
-              <div className="top-products">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="product-card" onClick={() => handleProductClick(product.id)}>
-                    <img src={product.image || "/placeholder.svg"} alt={product.name} />
-                    <p>{product.name}</p>
-                    <span>
-                      {product.price} <del>{product.originalPrice}</del>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className="nav-top-options">
@@ -258,13 +213,17 @@ const Navbar = () => {
         <div className="sidebar">
           <div className="sidebar-header">
             <img src={logo || "/placeholder.svg"} alt="Logo" className="sidebar-logo" />
-            <p>Student MarketPlace</p>
+            <p>Student Marketplace - Mohan Nagar</p>
             <FaTimes className="close-icon" onClick={() => setIsSidebarOpen(false)} />
           </div>
           <div className="sidebar-content">
             <div className="sidebar-section">
               {isLoggedIn ? (
                 <>
+                <Link to="/dashboard" className="sidebar-item">
+                       <FaUser className="sidebar-icon" />
+                       <span>Dashboard</span>
+                   </Link>
                   <Link to="/profile" className="sidebar-item">
                     <FaUser className="sidebar-icon" />
                     <span>My Profile</span>
@@ -318,15 +277,6 @@ const Navbar = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {searchOpen && (
-        <div
-          className="overlay"
-          onClick={() => {
-            setSearchOpen(false);
-          }}
-        />
       )}
     </div>
   );

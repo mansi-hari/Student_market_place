@@ -18,7 +18,7 @@ import WishlistPage from './Pages/WishlistPage';
 import CategoryPage from './Pages/CategoryPage';
 import ProductDetail from './Pages/ProductDetail';
 import ForgotPassword from './Pages/ForgotPassword';
-import Dashboard from './Pages/Dashboard/UserDashboard';
+import Dashboard from './Pages/Dashboard';
 import Footer from './Components/Footer/Footer';
 import ChatPage from './Pages/ChatPage';  // Import Chat Page
 import './App.css';
@@ -26,7 +26,7 @@ import AdminPanel from './Pages/AdminPanel';
 
 // Add these imports
 
-import UserDashboard from "./Pages/Dashboard/UserDashboard"
+
 import ProfilePage from "./Pages/ProfilePage"
 
 function App() {
@@ -92,7 +92,7 @@ const AppContent = () => {
         <Route path="/dashboard" element={<Dashboard />} />
         {/* Add these routes to your Routes component */}
         <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/dashboard" element={<UserDashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile/:userId" element={<ProfilePage />} />
       </Routes>
       <ProductPage />

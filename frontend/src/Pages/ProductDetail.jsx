@@ -1,103 +1,105 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useParams, Link, useNavigate } from "react-router-dom"
-import axios from "axios"
-import { toast } from "react-toastify"
-import { FaMapMarkerAlt, FaHeart, FaRegHeart, FaShare, FaArrowLeft } from "react-icons/fa"
-import "./ProductDetail.css"
+import { useEffect, useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { FaMapMarkerAlt, FaHeart, FaRegHeart, FaShare, FaArrowLeft } from "react-icons/fa";
+import "./ProductDetail.css";
 
 const ProductDetail = () => {
-  const { productId } = useParams()
-  const navigate = useNavigate()
-  const [product, setProduct] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [activeImage, setActiveImage] = useState(0)
-  const [inWishlist, setInWishlist] = useState(false)
-  const [similarProducts, setSimilarProducts] = useState([])
+  const { productId } = useParams();
+  const navigate = useNavigate();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeImage, setActiveImage] = useState(0);
+  const [inWishlist, setInWishlist] = useState(false);
+  const [similarProducts, setSimilarProducts] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        setLoading(true)
-        const response = await axios.get(`http://localhost:5000/api/products/${productId}`)
-        setProduct(response.data)
+        setLoading(true);
+        const response = await axios.get(`http://localhost:5000/api/products/${productId}`);
+        console.log("Product Data:", response.data); // Debug the product data
+        setProduct(response.data);
 
         // Check if product is in wishlist
-        checkWishlistStatus(response.data._id)
+        checkWishlistStatus(response.data._id);
 
         // Fetch similar products
-        fetchSimilarProducts(response.data.category)
+        fetchSimilarProducts(response.data.category);
 
-        setLoading(false)
+        setLoading(false);
       } catch (error) {
-        console.error("Error fetching product", error)
-        setError("Failed to load product details")
-        setLoading(false)
-        toast.error("Failed to load product details")
+        console.error("Error fetching product", error);
+        setError("Failed to load product details");
+        setLoading(false);
+        toast.error("Failed to load product details");
       }
-    }
+    };
 
-    fetchProduct()
-  }, [productId])
+    fetchProduct();
+  }, [productId]);
 
   const checkWishlistStatus = async (id) => {
-    const token = localStorage.getItem("token")
-    if (!token) return
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
     try {
       const response = await axios.get(`http://localhost:5000/api/wishlist/check/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
-      })
-      setInWishlist(response.data.isInWishlist)
+      });
+      setInWishlist(response.data.isInWishlist);
     } catch (error) {
-      console.error("Error checking wishlist status:", error)
+      console.error("Error checking wishlist status:", error);
     }
-  }
+  };
 
   const fetchSimilarProducts = async (category) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/products?category=${category}&limit=4`)
+      const response = await axios.get(`http://localhost:5000/api/products?category=${category}&limit=4`);
+      console.log("Similar Products:", response.data); // Debug similar products
       // Filter out the current product
-      const filtered = response.data.filter((p) => p._id !== productId)
-      setSimilarProducts(filtered.slice(0, 3))
+      const filtered = response.data.filter((p) => p._id !== productId);
+      setSimilarProducts(filtered.slice(0, 3));
     } catch (error) {
-      console.error("Error fetching similar products:", error)
+      console.error("Error fetching similar products:", error);
     }
-  }
+  };
 
   const toggleWishlist = async () => {
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please login to add items to wishlist")
-      navigate("/auth/login")
-      return
+      toast.error("Please login to add items to wishlist");
+      navigate("/auth/login");
+      return;
     }
 
     try {
       if (inWishlist) {
         await axios.delete(`http://localhost:5000/api/wishlist/${productId}`, {
           headers: { Authorization: `Bearer ${token}` },
-        })
-        setInWishlist(false)
-        toast.success("Removed from wishlist")
+        });
+        setInWishlist(false);
+        toast.success("Removed from wishlist");
       } else {
         await axios.post(
           `http://localhost:5000/api/wishlist/${productId}`,
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
-          },
-        )
-        setInWishlist(true)
-        toast.success("Added to wishlist")
+          }
+        );
+        setInWishlist(true);
+        toast.success("Added to wishlist");
       }
     } catch (error) {
-      console.error("Error updating wishlist:", error)
-      toast.error("Failed to update wishlist")
+      console.error("Error updating wishlist:", error);
+      toast.error("Failed to update wishlist");
     }
-  }
+  };
 
   const handleShare = () => {
     if (navigator.share) {
@@ -108,25 +110,37 @@ const ProductDetail = () => {
           url: window.location.href,
         })
         .then(() => console.log("Shared successfully"))
-        .catch((error) => console.log("Error sharing:", error))
+        .catch((error) => console.log("Error sharing:", error));
     } else {
       // Fallback - copy to clipboard
-      navigator.clipboard.writeText(window.location.href)
-      toast.success("Link copied to clipboard!")
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
     }
-  }
+  };
 
   const contactSeller = () => {
-    const token = localStorage.getItem("token")
+    const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please login to contact the seller")
-      navigate("/auth/login")
-      return
+      toast.error("Please login to contact the seller");
+      navigate("/auth/login");
+      return;
+    }
+
+    // Check if product and product.seller exist
+    if (!product || !product.seller) {
+      toast.error("Seller information is not available for this product.");
+      return;
+    }
+
+    // Check if the seller is anonymous or lacks an _id
+    if (!product.seller._id || product.seller.name === "Anonymous") {
+      toast.error("Cannot contact anonymous sellers.");
+      return;
     }
 
     // Navigate to chat with seller
-    navigate(`/chat/${product.seller._id}`)
-  }
+    navigate(`/chat/${product.seller._id}`);
+  };
 
   if (loading) {
     return (
@@ -136,7 +150,7 @@ const ProductDetail = () => {
         </div>
         <p className="mt-2">Loading product details...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -150,7 +164,7 @@ const ProductDetail = () => {
           Back to Products
         </Link>
       </div>
-    )
+    );
   }
 
   if (!product) {
@@ -164,7 +178,7 @@ const ProductDetail = () => {
           Back to Products
         </Link>
       </div>
-    )
+    );
   }
 
   return (
@@ -190,9 +204,13 @@ const ProductDetail = () => {
             <div className="main-image-container">
               {product.photos && product.photos.length > 0 ? (
                 <img
-                  src={`http://localhost:5000/${product.photos[activeImage]}`}
+                  src={`http://localhost:5000/uploads/${product.photos[activeImage]}`}
                   alt={product.title}
                   className="main-product-image"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://via.placeholder.com/400?text=No+Image";
+                  }}
                 />
               ) : (
                 <div className="no-image-placeholder">
@@ -209,7 +227,14 @@ const ProductDetail = () => {
                     className={`thumbnail ${activeImage === index ? "active" : ""}`}
                     onClick={() => setActiveImage(index)}
                   >
-                    <img src={`http://localhost:5000/${photo}`} alt={`${product.title} - ${index + 1}`} />
+                    <img
+                      src={`http://localhost:5000/uploads/${photo}`}
+                      alt={`${product.title} - ${index + 1}`}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://via.placeholder.com/100?text=No+Image";
+                      }}
+                    />
                   </div>
                 ))}
               </div>
@@ -243,7 +268,11 @@ const ProductDetail = () => {
           </div>
 
           <div className="product-actions">
-            <button className="btn btn-primary btn-lg contact-btn" onClick={contactSeller}>
+            <button
+              className="btn btn-primary btn-lg contact-btn"
+              onClick={contactSeller}
+              disabled={!product.seller || !product.seller._id || product.seller.name === "Anonymous"} // Disable button if seller is anonymous
+            >
               Contact Seller
             </button>
             <button
@@ -290,7 +319,14 @@ const ProductDetail = () => {
             <div className="seller-card">
               <div className="seller-avatar">
                 {product.seller?.profileImage ? (
-                  <img src={`http://localhost:5000/${product.seller.profileImage}`} alt={product.seller.name} />
+                  <img
+                    src={`http://localhost:5000/uploads/${product.seller.profileImage}`}
+                    alt={product.seller.name}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://via.placeholder.com/50?text=No+Image";
+                    }}
+                  />
                 ) : (
                   <div className="avatar-placeholder">{product.seller?.name?.charAt(0) || "S"}</div>
                 )}
@@ -318,9 +354,13 @@ const ProductDetail = () => {
                   <div className="position-relative">
                     {similarProduct.photos && similarProduct.photos.length > 0 ? (
                       <img
-                        src={`http://localhost:5000/${similarProduct.photos[0]}`}
+                        src={`http://localhost:5000/uploads/${similarProduct.photos[0]}`}
                         className="card-img-top similar-product-image"
                         alt={similarProduct.title}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/200?text=No+Image";
+                        }}
                       />
                     ) : (
                       <div className="card-img-top similar-product-image-placeholder">No Image</div>
@@ -340,8 +380,7 @@ const ProductDetail = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default ProductDetail
-
+export default ProductDetail;

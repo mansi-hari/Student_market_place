@@ -65,46 +65,7 @@ const HomePage = () => {
     },
   ])
 
-  const testimonials = [
-    {
-      quote: "Really happy with Student MarketPlace helped me grow my business",
-      rating: 5,
-      author: "App Store Review",
-      source: "App Store Review",
-    },
-    {
-      quote: "This is a great app you can sell things fast. It's really easy to use",
-      rating: 4,
-      author: "Paridhi Gupta",
-      source: "App Store Review",
-    },
-    {
-      quote: "Great app. Always reliable.",
-      rating: 5,
-      author: "Shivansh Kumar",
-      source: "Google Play Review",
-    },
-    {
-      quote:
-        "Gives you a clear process of communicating with the buyer and it's got some fabulous bargains and you can do this all for free.",
-      rating: 5,
-      author: "Ekta Pandit",
-      source: "App Store Review",
-    },
-    {
-      quote: "Love it. I made money from the first day!",
-      rating: 5,
-      author: "Rohan Singh",
-      source: "Google Play Review",
-    },
-    {
-      quote: "Excellent platform to buy and sell second hand goods. Very easy to use",
-      rating: 5,
-      author: "Kalyan Chandrasekar",
-      source: "Google Play Review",
-    },
-  ]
-
+  
   // Fetch all products and featured products when component mounts
   useEffect(() => {
     const fetchData = async () => {
@@ -441,36 +402,7 @@ const HomePage = () => {
       {/* How It Works */}
       <HowItWorks />
 
-      {/* Testimonials Section */}
-      <section style={{ padding: "80px 0", backgroundColor: "#f8f9fa" }}>
-        <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px", textAlign: "center" }}>
-          <h1 style={{ fontSize: "2.5rem", fontWeight: "700", color: "#2d3748", marginBottom: "60px" }}>
-            See what Student MarketPlace users are saying
-          </h1>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                style={{
-                  background: "white",
-                  borderRadius: "12px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                  padding: "24px",
-                }}
-              >
-                <p style={{ fontSize: "1rem", color: "#4a5568", marginBottom: "16px" }}>"{testimonial.quote}"</p>
-                <StarRating rating={testimonial.rating} />
-                <div style={{ fontSize: "0.875rem" }}>
-                  <span style={{ color: "#2d3748", fontWeight: "600" }}>{testimonial.author}</span>
-                  <span style={{ color: "#718096", marginLeft: "4px" }}>· {testimonial.source}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
+     </div>
   )
 }
 

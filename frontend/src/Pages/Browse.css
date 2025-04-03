@@ -188,10 +188,17 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #6b7280; /* Default color for heart */
+  transition: color 0.2s ease;
 }
 
 .favorite-btn.active {
-  color: #ef4444;
+  color: #ef4444; /* Red color when active */
+}
+
+.favorite-btn svg {
+  width: 20px;
+  height: 20px;
 }
 
 .product-info {

@@ -1,26 +1,23 @@
-"use client";
-
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { Heart, Grid, List, MapPin, X, MessageCircle, Phone, Mail } from "lucide-react";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { Heart, Grid, List, MapPin, X } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import "./Browse.css";
 
 const Browse = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { category } = useParams();
   const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedState, setSelectedState] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
   const [sortOption, setSortOption] = useState("newest");
   const [displayProducts, setDisplayProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [categoryTitle, setCategoryTitle] = useState("All Products");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showContactInfo, setShowContactInfo] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [selectedConditions, setSelectedConditions] = useState({
@@ -29,19 +26,18 @@ const Browse = () => {
     Good: false,
     Used: false,
   });
+  const [selectedCategory, setSelectedCategory] = useState(category || "");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(6);
 
-  const { category } = useParams();
-
-  const statesAndCities = {
-    Maharashtra: ["Mumbai", "Pune", "Nagpur"],
-    Karnataka: ["Bangalore", "Mysore"],
-    Delhi: ["New Delhi"],
-    "Uttar Pradesh": ["Lucknow", "Kanpur"],
-    "Tamil Nadu": ["Chennai", "Coimbatore"],
-    "West Bengal": ["Kolkata", "Durgapur"],
-    Gujarat: ["Ahmedabad", "Surat"],
-    Rajasthan: ["Jaipur", "Udaipur"],
-  };
+  const categories = [
+    "All Categories",
+    "Services",
+    "Stationary",
+    "Bikes",
+    "Furniture & Decor",
+    "Appliances",
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -51,21 +47,20 @@ const Browse = () => {
     setFavorites(savedFavorites);
 
     fetchProducts();
-  }, [category, window.location.search]); // Added window.location.search to trigger on search/location changes
+  }, [category]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       let url = "http://localhost:5000/api/products";
 
-      // Get search and location from URL query parameters
-      const urlParams = new URLSearchParams(window.location.search);
-      const searchTerm = urlParams.get("search") || "";
-      const locationTerm = urlParams.get("location") || "";
+      const urlParams = new URLSearchParams(location.search);
+      const search = urlParams.get("search") || "";
+      const college = urlParams.get("college") || "";
 
       const queryParams = new URLSearchParams();
-      if (searchTerm) queryParams.set("search", searchTerm);
-      if (locationTerm) queryParams.set("location", locationTerm);
+      if (search) queryParams.set("search", search);
+      if (college) queryParams.set("college", college);
 
       if (category) {
         url = `http://localhost:5000/api/products/category/${category}`;
@@ -76,19 +71,15 @@ const Browse = () => {
       }
 
       const response = await axios.get(url);
-      console.log("Products fetched:", response.data);
-
       if (Array.isArray(response.data)) {
         setAllProducts(response.data);
-        applyFilters(response.data);
+        setCategoryTitle(category ? category : "All Products");
       } else {
-        console.error("Invalid data format received:", response.data);
         setError("Invalid data format received from server");
       }
 
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching products:", err);
       setError("Failed to load products");
       setLoading(false);
       toast.error("Failed to load products");
@@ -98,42 +89,58 @@ const Browse = () => {
   const applyFilters = (products = allProducts) => {
     let filteredProducts = [...products];
 
-    if (selectedState) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.location && product.location.includes(selectedState)
-      );
+    // Apply search filter from URL
+    const urlParams = new URLSearchParams(location.search);
+    const searchTerm = urlParams.get("search")?.toLowerCase() || "";
+    const locationFilter = urlParams.get("college")?.toLowerCase() || "";
 
-      if (selectedCity) {
-        filteredProducts = filteredProducts.filter(
-          (product) => product.location && product.location.includes(selectedCity)
-        );
-      }
+    if (searchTerm) {
+      filteredProducts = filteredProducts.filter(
+        (product) =>
+          product.title?.toLowerCase().includes(searchTerm) ||
+          product.description?.toLowerCase().includes(searchTerm) ||
+          product.category?.toLowerCase().includes(searchTerm)
+      );
     }
 
+    if (locationFilter) {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.location && product.location.toLowerCase().includes(locationFilter)
+      );
+    }
+
+    // Apply category filter
+    if (selectedCategory && selectedCategory !== "All Categories") {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.category === selectedCategory
+      );
+    }
+
+    // Apply price range filter
     if (priceRange.min !== "") {
       filteredProducts = filteredProducts.filter((product) => product.price >= Number(priceRange.min));
     }
-
     if (priceRange.max !== "") {
       filteredProducts = filteredProducts.filter((product) => product.price <= Number(priceRange.max));
     }
 
+    // Apply condition filter
     const selectedConditionsList = Object.keys(selectedConditions).filter(
       (condition) => selectedConditions[condition]
     );
-
     if (selectedConditionsList.length > 0) {
       filteredProducts = filteredProducts.filter((product) =>
         selectedConditionsList.includes(product.condition)
       );
     }
 
+    // Apply sorting
     switch (sortOption) {
       case "price-low":
         filteredProducts.sort((a, b) => a.price - b.price);
         break;
       case "price-high":
-        filteredProducts.sort((a, b) => b.price - b.price);
+        filteredProducts.sort((a, b) => b.price - a.price);
         break;
       case "newest":
       default:
@@ -160,7 +167,8 @@ const Browse = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [selectedState, selectedCity, priceRange, selectedConditions, sortOption]);
+    setCurrentPage(1);
+  }, [location.search, allProducts, selectedCategory, priceRange, selectedConditions, sortOption]);
 
   const toggleFavorite = async (product, e) => {
     e.stopPropagation();
@@ -186,6 +194,7 @@ const Browse = () => {
         if (response.data.success) {
           const updatedFavorites = favorites.filter((item) => item._id !== product._id);
           setFavorites(updatedFavorites);
+          localStorage.setItem("wishlist", JSON.stringify(updatedFavorites));
           toast.success(`${product.title} removed from wishlist`);
         }
       } else {
@@ -202,49 +211,21 @@ const Browse = () => {
         if (response.data.success) {
           const updatedFavorites = [...favorites, product];
           setFavorites(updatedFavorites);
+          localStorage.setItem("wishlist", JSON.stringify(updatedFavorites));
           toast.success(`${product.title} added to wishlist`);
         }
       }
     } catch (error) {
-      console.error("Error toggling wishlist:", error);
       toast.error("Failed to update wishlist");
     }
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
-
-    const fetchWishlist = async () => {
-      if (!token) return;
-
-      try {
-        const response = await axios.get("http://localhost:5000/api/wishlist", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.data.success) {
-          setFavorites(response.data.data.products);
-        }
-      } catch (error) {
-        console.error("Error fetching wishlist:", error);
-      }
-    };
-
-    fetchWishlist();
-    fetchProducts();
-  }, [category]);
-
   const handleImageClick = (product) => {
     setSelectedProduct(product);
-    setShowContactInfo(false);
   };
 
   const closeOptions = () => {
     setSelectedProduct(null);
-    setShowContactInfo(false);
   };
 
   const handleContactSeller = () => {
@@ -254,22 +235,20 @@ const Browse = () => {
       return;
     }
 
-    setShowContactInfo(true);
-  };
-
-  const handleStartChat = (sellerId) => {
-    if (!isLoggedIn) {
-      toast.error("Please login to chat with the seller");
-      navigate("/auth/login");
-      return;
-    }
-
-    navigate(`/chat/${sellerId}`);
+    navigate(`/chat/${selectedProduct.seller._id}`);
   };
 
   const isInFavorites = (productId) => {
     return favorites.some((item) => item._id === productId);
   };
+
+  // Pagination Logic
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = displayProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(displayProducts.length / productsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   if (loading) {
     return (
@@ -297,26 +276,18 @@ const Browse = () => {
       <aside className="filters">
         <h3>Filters</h3>
         <div className="filter-section">
-          <h4>Location</h4>
-          <select onChange={(e) => setSelectedState(e.target.value)} value={selectedState} className="form-select mb-2">
-            <option value="">Select State</option>
-            {Object.keys(statesAndCities).map((state) => (
-              <option key={state} value={state}>
-                {state}
+          <h4>Category</h4>
+          <select
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            value={selectedCategory}
+            className="form-select"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat === "All Categories" ? "" : cat}>
+                {cat}
               </option>
             ))}
           </select>
-
-          {selectedState && (
-            <select onChange={(e) => setSelectedCity(e.target.value)} value={selectedCity} className="form-select">
-              <option value="">Select City</option>
-              {statesAndCities[selectedState].map((city) => (
-                <option key={city} value={city}>
-                  {city}
-                </option>
-              ))}
-            </select>
-          )}
         </div>
 
         <div className="filter-section">
@@ -367,8 +338,7 @@ const Browse = () => {
         <button
           className="btn btn-outline-secondary w-100 mt-3"
           onClick={() => {
-            setSelectedState("");
-            setSelectedCity("");
+            setSelectedCategory("");
             setPriceRange({ min: "", max: "" });
             setSelectedConditions({
               New: false,
@@ -376,7 +346,7 @@ const Browse = () => {
               Good: false,
               Used: false,
             });
-            applyFilters();
+            navigate("/products");
           }}
         >
           Reset Filters
@@ -409,8 +379,8 @@ const Browse = () => {
         </div>
 
         <div className={`products-container ${viewMode}`}>
-          {displayProducts.length > 0 ? (
-            displayProducts.map((product) => (
+          {currentProducts.length > 0 ? (
+            currentProducts.map((product) => (
               <div key={product._id} className="product-card">
                 <div className="product-image" onClick={() => handleImageClick(product)}>
                   {product.photos && product.photos.length > 0 ? (
@@ -456,13 +426,41 @@ const Browse = () => {
             ))
           ) : (
             <div className="no-products">
-              <p>No products found for this category. Try adjusting your filters.</p>
+              <p>No products found. Try adjusting your filters or search term.</p>
               <Link to="/sell" className="btn btn-primary mt-3">
                 List an Item
               </Link>
             </div>
           )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="page-btn"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => paginate(page)}
+                className={`page-btn ${currentPage === page ? "active" : ""}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="page-btn"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </main>
 
       {selectedProduct && (
@@ -495,47 +493,17 @@ const Browse = () => {
                 <MapPin size={16} /> {selectedProduct.location}
               </p>
               <p className="modal-product-description">{selectedProduct.description}</p>
-
-              {showContactInfo ? (
-                <div className="contact-info-container">
-                  <h3>Contact Information</h3>
-                  <div className="contact-methods">
-                    {selectedProduct.phoneNumber && (
-                      <div className="contact-method">
-                        <Phone size={20} />
-                        <span>{selectedProduct.phoneNumber}</span>
-                      </div>
-                    )}
-                    {selectedProduct.email && (
-                      <div className="contact-method">
-                        <Mail size={20} />
-                        <span>{selectedProduct.email}</span>
-                      </div>
-                    )}
-                    {selectedProduct.seller && (
-                      <button
-                        className="btn btn-outline-primary mt-2"
-                        onClick={() => handleStartChat(selectedProduct.seller._id)}
-                      >
-                        <MessageCircle size={20} className="me-2" />
-                        Chat with Seller
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="modal-actions">
-                  <button className="contact-seller" onClick={handleContactSeller}>
-                    Contact Seller
-                  </button>
-                  <button
-                    className={`add-to-favorites ${isInFavorites(selectedProduct._id) ? "active" : ""}`}
-                    onClick={(e) => toggleFavorite(selectedProduct, e)}
-                  >
-                    {isInFavorites(selectedProduct._id) ? "Remove from Favorites" : "Add to Favorites"}
-                  </button>
-                </div>
-              )}
+              <div className="modal-actions">
+                <button className="contact-seller" onClick={handleContactSeller}>
+                  Contact Seller
+                </button>
+                <button
+                  className={`add-to-favorites ${isInFavorites(selectedProduct._id) ? "active" : ""}`}
+                  onClick={(e) => toggleFavorite(selectedProduct, e)}
+                >
+                  {isInFavorites(selectedProduct._id) ? "Remove from Favorites" : "Add to Favorites"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

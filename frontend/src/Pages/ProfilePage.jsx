@@ -27,9 +27,7 @@ const ProfilePage = () => {
     const fetchUserData = async () => {
       setLoading(true)
       try {
-        // In a real app, you would fetch this data from your API
-        // For demo purposes, we'll use mock data
-
+      
         // Check if this is the current user's profile
         const currentUser = JSON.parse(localStorage.getItem("user") || "{}")
         const isCurrentUserProfile = currentUser._id === userId || !userId

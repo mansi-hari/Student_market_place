@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
 const ProductSchema = new mongoose.Schema(
   {
@@ -16,10 +16,10 @@ const ProductSchema = new mongoose.Schema(
     phoneNumber: { type: String },
     email: { type: String },
     negotiable: { type: Boolean, default: false },
-    seller: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    sellerUniversity: { type: String, required: true }, // Added for consistency
   },
-  { timestamps: true },
-)
+  { timestamps: true }
+);
 
-module.exports = mongoose.model("Product", ProductSchema)
-
+module.exports = mongoose.model("Product", ProductSchema);
