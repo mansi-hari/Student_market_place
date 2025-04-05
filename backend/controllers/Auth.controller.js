@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const { createError } = require('../utils/errorUtil');
 const { sendEmail } = require('../utils/emailUtil');
 const bcrypt = require("bcryptjs");
+const Product = require('../models/Product.model');
+const Order = require('../models/Order.model');
 
 /**
  * Register a new user
@@ -24,7 +26,7 @@ exports.register = async (req, res, next) => {
       name,
       email,
       password,
-      university,
+      sellerUniversity: university, // Adjusted to match schema
     });
 
     await user.save();
@@ -65,7 +67,7 @@ exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    console.log(email,password)
+    console.log(email, password)
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
@@ -134,7 +136,7 @@ exports.updateProfile = async (req, res, next) => {
     // Find user and update
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name, university, bio, phone, profileImage },
+      { name, sellerUniversity: university, bio, phone, profileImage },
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -180,6 +182,41 @@ exports.changePassword = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: 'Password updated successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get user dashboard data
+ * @route GET /api/users/dashboard
+ * @access Private
+ */
+exports.getUserDashboard = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const user = await User.findById(userId).select('-password');
+    if (!user) return next(createError(404, 'User not found'));
+
+    const listings = await Product.countDocuments({ seller: userId });
+    const activeListings = await Product.countDocuments({ seller: userId, status: 'active' });
+    const soldItems = await Product.countDocuments({ seller: userId, status: 'completed' });
+    const orders = await Order.countDocuments({ buyer: userId });
+    const recentOrders = await Order.find({ buyer: userId }).sort({ createdAt: -1 }).limit(5).populate('product');
+    const recentListings = await Product.find({ seller: userId }).sort({ createdAt: -1 }).limit(5);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user,
+        listings,
+        activeListings,
+        soldItems,
+        orders,
+        recentOrders,
+        recentListings,
+      },
     });
   } catch (error) {
     next(error);

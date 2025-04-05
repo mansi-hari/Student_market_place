@@ -12,12 +12,12 @@ const ProductSchema = new mongoose.Schema(
     photos: [{ type: String }],
     location: { type: String, required: true },
     pincode: { type: String, required: true },
-    fullAddress: { type: String },
+    
     phoneNumber: { type: String },
     email: { type: String },
     negotiable: { type: Boolean, default: false },
     seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    sellerUniversity: { type: String, required: true }, // Added for consistency
+    sellerUniversity: { type: String, required: true },
   },
   { timestamps: true }
 );

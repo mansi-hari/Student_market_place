@@ -5,6 +5,7 @@ const User = require("../models/User.model");
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+
 // ✅ Signup
 router.post("/signup", async (req, res) => {
   try {
@@ -78,7 +79,6 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid email or password." });
     }
 
-
     // Compare hashed password with entered password
     const isMatch = await user.comparePassword(password);
 
@@ -98,7 +98,7 @@ router.post("/login", async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        university: user.university,
+        university: user.sellerUniversity,
         location: user.location,
       },
     });
@@ -108,8 +108,6 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error", error: error.message });
   }
 });
-
-
 
 // ✅ Get Logged-in User (Protected Route)
 router.get("/me", protect, async (req, res) => {
@@ -140,5 +138,8 @@ router.get("/users", async (req, res) => {
 router.get("/", (req, res) => {
   res.json({ success: true, message: "Auth routes working!" });
 });
+
+// ✅ Dashboard Route
+router.get("/dashboard", protect, require("../controllers/userController").getUserDashboard);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../utils/api';
+import { api } from '../utils/api'; // Named import ke liye { api } use karen
 
 const MarketplaceContext = createContext();
 
@@ -11,7 +11,7 @@ export const MarketplaceProvider = ({ children }) => {
         const fetchWishlist = async () => {
             try {
                 const response = await api.getWishlist();
-                setWishlist(response);
+                setWishlist(response.data || []); // Ensure response.data is used
             } catch (error) {
                 console.error("Failed to fetch wishlist:", error);
             }

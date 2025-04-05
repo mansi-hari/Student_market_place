@@ -18,21 +18,16 @@ import WishlistPage from './Pages/WishlistPage';
 import CategoryPage from './Pages/CategoryPage';
 import ProductDetail from './Pages/ProductDetail';
 import ForgotPassword from './Pages/ForgotPassword';
-import Dashboard from './Pages/Dashboard';
+import Dashboard from './Pages/Dashboard'; 
 import Footer from './Components/Footer/Footer';
-import ChatPage from './Pages/ChatPage';  // Import Chat Page
+import ChatPage from './Pages/ChatPage';
 import './App.css';
 import AdminPanel from './Pages/AdminPanel';
-
-// Add these imports
-
-
 import ProfilePage from "./Pages/ProfilePage"
 
 function App() {
-  const token = localStorage.getItem('token'); // Get token from localStorage
+  const token = localStorage.getItem('token');
 
-  // Initialize socket connection if user is logged in
   useEffect(() => {
     if (token) {
       initializeSocket(token);
@@ -56,47 +51,26 @@ const AppContent = () => {
 
   return (
     <div>
-      {/* Toaster for notifications */}
       <Toaster position="top-right" />
-     
-      {/* Navbar remains fixed at the top */}
       <Navbar />
-     
-      {/* Hero Section only appears on the HomePage */}
       {location.pathname === '/' && <Hero />}
 
-      {/* Routing Section */}
       <Routes>
-        {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/products" element={<Browse />} />
         <Route path="/browse/:category" element={<Browse />} />
         <Route path="/products/category/:categoryName" element={<CategoryPage />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
-        
-
-        {/* Chat Page Route */}
         <Route path="/chat/:sellerId" element={<ChatPage />} />
-
-        {/* Auth Routes */}
         <Route path="/auth/login" element={<Login isSignup={false} />} />
         <Route path="/auth/signup" element={<Signup isSignup={true} />} />
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-
-
-        {/* <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} /> */}
-        {/* <Route path="/sell" element={<SellPage />}/> */}
         <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-
-        <Route path="/dashboard" element={<Dashboard />} />
-        {/* Add these routes to your Routes component */}
+        <Route path="/dashboard" element={<Dashboard />} /> 
         <Route path="/admin" element={<AdminPanel />} />
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile/:userId" element={<ProfilePage />} />
       </Routes>
-      <ProductPage />
-      {/* Footer remains at the bottom */}
       <Footer />
     </div>
   );

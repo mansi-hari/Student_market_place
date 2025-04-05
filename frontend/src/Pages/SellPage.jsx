@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import axios from "axios"
-import { toast, ToastContainer } from "react-toastify"
-import "react-toastify/dist/ReactToastify.css"
-import "./SellPage.css"
+import { useState } from "react";
+import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "./SellPage.css";
 
 const SellPage = () => {
   const [formData, setFormData] = useState({
@@ -18,120 +18,119 @@ const SellPage = () => {
     photos: null,
     location: "",
     pincode: "",
-    fullAddress: "",
     phoneNumber: "",
     email: "",
     negotiable: false,
-  })
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [previewImages, setPreviewImages] = useState([])
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewImages, setPreviewImages] = useState([]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
       [name]: type === "checkbox" ? checked : value,
-    })
-  }
+    });
+  };
 
   const handleFileChange = (e) => {
-    const filesArray = Array.from(e.target.files)
+    const filesArray = Array.from(e.target.files);
 
     // Limit to 5 images
     if (filesArray.length > 5) {
-      toast.error("You can upload a maximum of 5 photos.")
-      return
+      toast.error("You can upload a maximum of 5 photos.");
+      return;
     }
 
     setFormData({
       ...formData,
       photos: filesArray,
-    })
+    });
 
     // Generate preview URLs
-    const newPreviews = filesArray.map((file) => URL.createObjectURL(file))
+    const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
 
     // Revoke old preview URLs to avoid memory leaks
-    previewImages.forEach((url) => URL.revokeObjectURL(url))
+    previewImages.forEach((url) => URL.revokeObjectURL(url));
 
-    setPreviewImages(newPreviews)
-  }
+    setPreviewImages(newPreviews);
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     // Validation
     if (Number.parseFloat(formData.price) <= 0 || isNaN(formData.price)) {
-      toast.error("Price must be a positive number.")
-      return
+      toast.error("Price must be a positive number.");
+      return;
     }
 
     if (!formData.location.trim()) {
-      toast.error("Location is required.")
-      return
+      toast.error("Location is required.");
+      return;
     }
 
     if (!formData.pincode.trim() || isNaN(formData.pincode)) {
-      toast.error("Valid Pincode is required.")
-      return
+      toast.error("Valid Pincode is required.");
+      return;
     }
 
     if (!formData.photos || formData.photos.length === 0) {
-      toast.error("Please upload at least one photo.")
-      return
+      toast.error("Please upload at least one photo.");
+      return;
     }
 
     // Validate phone number format if provided
     if (formData.phoneNumber && !/^\d{10}$/.test(formData.phoneNumber)) {
-      toast.error("Please enter a valid 10-digit phone number.")
-      return
+      toast.error("Please enter a valid 10-digit phone number.");
+      return;
     }
 
     // Validate email format if provided
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      toast.error("Please enter a valid email address.")
-      return
+      toast.error("Please enter a valid email address.");
+      return;
     }
 
     // Require at least one contact method
     if (!formData.phoneNumber && !formData.email) {
-      toast.error("Please provide either a phone number or email for contact.")
-      return
+      toast.error("Please provide either a phone number or email for contact.");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     // Create FormData object for file upload
-    const formDataToSend = new FormData()
+    const formDataToSend = new FormData();
 
     // Add text fields
     Object.keys(formData).forEach((key) => {
       if (key !== "photos") {
-        formDataToSend.append(key, formData[key])
+        formDataToSend.append(key, formData[key]);
       }
-    })
+    });
 
     // Add photos
     if (formData.photos) {
       formData.photos.forEach((file) => {
-        formDataToSend.append("photos", file)
-      })
+        formDataToSend.append("photos", file);
+      });
     }
 
     try {
-      console.log("Submitting form data...")
-
+      console.log("Submitting form data...", Object.fromEntries(formDataToSend)); // Debug log
       const response = await axios.post("http://localhost:5000/api/products", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`, // Ensure token is present
         },
-      })
+      });
 
-      console.log("Response:", response.data)
+      console.log("Response:", response.data);
 
       if (response.data.success) {
-        toast.success("Item listed successfully!")
+        toast.success("Item listed successfully!");
 
         // Reset form
         setFormData({
@@ -145,25 +144,24 @@ const SellPage = () => {
           photos: null,
           location: "",
           pincode: "",
-          fullAddress: "",
           phoneNumber: "",
           email: "",
           negotiable: false,
-        })
+        });
 
         // Clear preview images
-        previewImages.forEach((url) => URL.revokeObjectURL(url))
-        setPreviewImages([])
+        previewImages.forEach((url) => URL.revokeObjectURL(url));
+        setPreviewImages([]);
       } else {
-        toast.error(response.data.message || "Error listing item!")
+        toast.error(response.data.message || "Error listing item!");
       }
     } catch (error) {
-      console.error("Error listing item:", error)
-      toast.error(error.response?.data?.message || "Error listing item!")
+      console.error("Error listing item:", error.response ? error.response.data : error.message);
+      toast.error(error.response?.data?.message || "Server error, try again later!");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="sell-page-container container mt-5">
@@ -173,9 +171,7 @@ const SellPage = () => {
           <div className="card-header">Basic Information</div>
           <div className="card-body">
             <div className="mb-3">
-              <label htmlFor="title" className="form-label">
-                Title
-              </label>
+              <label htmlFor="title" className="form-label">Title</label>
               <input
                 type="text"
                 className="form-control"
@@ -189,9 +185,7 @@ const SellPage = () => {
 
             <div className="row mb-3">
               <div className="col-md-6">
-                <label htmlFor="category" className="form-label">
-                  Category
-                </label>
+                <label htmlFor="category" className="form-label">Category</label>
                 <select
                   className="form-select"
                   id="category"
@@ -212,9 +206,7 @@ const SellPage = () => {
 
               {formData.category === "Others" && (
                 <div className="col-md-6">
-                  <label htmlFor="otherCategory" className="form-label">
-                    Other Category
-                  </label>
+                  <label htmlFor="otherCategory" className="form-label">Other Category</label>
                   <input
                     type="text"
                     className="form-control"
@@ -230,9 +222,7 @@ const SellPage = () => {
 
             <div className="row mb-3">
               <div className="col-md-6">
-                <label htmlFor="price" className="form-label">
-                  Price (₹)
-                </label>
+                <label htmlFor="price" className="form-label">Price (₹)</label>
                 <input
                   type="number"
                   className="form-control"
@@ -245,9 +235,7 @@ const SellPage = () => {
               </div>
 
               <div className="col-md-6">
-                <label htmlFor="condition" className="form-label">
-                  Condition
-                </label>
+                <label htmlFor="condition" className="form-label">Condition</label>
                 <select
                   className="form-select"
                   id="condition"
@@ -264,9 +252,7 @@ const SellPage = () => {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="description" className="form-label">
-                Description
-              </label>
+              <label htmlFor="description" className="form-label">Description</label>
               <textarea
                 className="form-control"
                 id="description"
@@ -279,9 +265,7 @@ const SellPage = () => {
             </div>
 
             <div className="mb-3">
-              <label htmlFor="tags" className="form-label">
-                Tags (comma separated)
-              </label>
+              <label htmlFor="tags" className="form-label">Tags (comma separated)</label>
               <input
                 type="text"
                 className="form-control"
@@ -302,9 +286,7 @@ const SellPage = () => {
                 checked={formData.negotiable}
                 onChange={handleChange}
               />
-              <label className="form-check-label" htmlFor="negotiable">
-                Price is negotiable
-              </label>
+              <label className="form-check-label" htmlFor="negotiable">Price is negotiable</label>
             </div>
           </div>
         </div>
@@ -314,9 +296,7 @@ const SellPage = () => {
           <div className="card-body">
             <div className="row mb-3">
               <div className="col-md-6">
-                <label htmlFor="phoneNumber" className="form-label">
-                  Phone Number
-                </label>
+                <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
                 <input
                   type="tel"
                   className="form-control"
@@ -330,9 +310,7 @@ const SellPage = () => {
               </div>
 
               <div className="col-md-6">
-                <label htmlFor="email" className="form-label">
-                  Email Address
-                </label>
+                <label htmlFor="email" className="form-label">Email Address</label>
                 <input
                   type="email"
                   className="form-control"
@@ -351,9 +329,7 @@ const SellPage = () => {
           <div className="card-header">Photos</div>
           <div className="card-body">
             <div className="mb-3">
-              <label htmlFor="photos" className="form-label">
-                Upload Photos (Max 5)
-              </label>
+              <label htmlFor="photos" className="form-label">Upload Photos (Max 5)</label>
               <input
                 type="file"
                 className="form-control"
@@ -391,9 +367,7 @@ const SellPage = () => {
           <div className="card-body">
             <div className="row mb-3">
               <div className="col-md-6">
-                <label htmlFor="location" className="form-label">
-                  City/Area
-                </label>
+                <label htmlFor="location" className="form-label">City/Area</label>
                 <input
                   type="text"
                   className="form-control"
@@ -406,9 +380,7 @@ const SellPage = () => {
               </div>
 
               <div className="col-md-6">
-                <label htmlFor="pincode" className="form-label">
-                  Pincode
-                </label>
+                <label htmlFor="pincode" className="form-label">Pincode</label>
                 <input
                   type="text"
                   className="form-control"
@@ -419,21 +391,6 @@ const SellPage = () => {
                   required
                 />
               </div>
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="fullAddress" className="form-label">
-                Full Address (Optional)
-              </label>
-              <textarea
-                className="form-control"
-                id="fullAddress"
-                name="fullAddress"
-                rows="2"
-                value={formData.fullAddress}
-                onChange={handleChange}
-                placeholder="This will only be shared with buyers after you approve"
-              ></textarea>
             </div>
           </div>
         </div>
@@ -454,8 +411,7 @@ const SellPage = () => {
 
       <ToastContainer position="top-right" autoClose={5000} />
     </div>
-  )
-}
+  );
+};
 
-export default SellPage
-
+export default SellPage;

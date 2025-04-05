@@ -1,143 +1,180 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// Dashboard.jsx
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../Context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import axios from "axios";
-import { User, ShoppingBag, Tag, MessageCircle, Heart, LogOut } from "lucide-react";
-import "./Dashboard.css";
 
 const Dashboard = () => {
+  const { currentUser, logout, fetchDashboardData } = useAuth();
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    user: {},
+    listings: 0,
+    activeListings: 0,
+    soldItems: 0,
+    orders: 0,
+    recentOrders: [],
+    recentListings: [],
+  });
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ orders: 0, listings: 0, wishlist: 0 });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Please login to access dashboard");
-      navigate("/auth/login");
-      return;
-    }
-
-    fetchDashboardData();
-  }, [navigate]);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/user/dashboard", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (response.data.success) {
-        setUser(response.data.user);
-        setStats({
-          orders: response.data.orders,
-          listings: response.data.listings,
-          wishlist: response.data.wishlist,
-        });
+    const fetchData = async () => {
+      if (currentUser) {
+        try {
+          setLoading(true);
+          console.log("Fetching dashboard for user:", currentUser);
+          const response = await fetchDashboardData();
+          console.log("Dashboard response:", response);
+          if (response.success) {
+            setDashboardData(response.data);
+          } else {
+            toast.error(response.message || "Failed to load dashboard");
+          }
+        } catch (error) {
+          console.error("Error fetching dashboard:", error);
+          toast.error(error.response?.data?.message || "Failed to load dashboard");
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
       }
-    } catch (err) {
-      toast.error("Failed to load dashboard: " + (err.response?.data?.message || err.message));
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    toast.success("Logged out successfully");
-    navigate("/auth/login");
-  };
+    fetchData();
+  }, [currentUser, fetchDashboardData]);
 
-  if (loading) {
-    return (
-      <div className="container text-center my-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p>Loading dashboard...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="container my-5">
-        <div className="alert alert-danger">User data not found. Please login again.</div>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-5">Loading...</div>;
+  if (!currentUser) return (
+    <div className="text-center py-5">
+      Please <Link to="/auth/login" className="text-primary">login</Link> to access your dashboard.
+    </div>
+  );
 
   return (
-    <div className="dashboard-page">
-      <aside className="sidebar">
-        <h2>Dashboard</h2>
-        <nav className="sidebar-nav">
-          <a href="/dashboard/profile" className="nav-item">
-            <User size={20} /> Profile
-          </a>
-          <a href="/dashboard/orders" className="nav-item">
-            <ShoppingBag size={20} /> Orders
-          </a>
-          <a href="/dashboard/listings" className="nav-item">
-            <Tag size={20} /> My Listings
-          </a>
-          <a href="/dashboard/wishlist" className="nav-item">
-            <Heart size={20} /> Wishlist
-          </a>
-          <button onClick={handleLogout} className="nav-item logout-btn">
-            <LogOut size={20} /> Logout
-          </button>
-        </nav>
-      </aside>
-
-      <main className="dashboard-content">
-        <div className="profile-header">
-          <div className="profile-avatar">
-            {user.profileImage ? (
-              <img src={`http://localhost:5000/uploads/${user.profileImage}`} alt="User Avatar" />
-            ) : (
-              <div className="avatar-placeholder">No Avatar</div>
-            )}
-          </div>
-          <div className="profile-info">
-            <h1>{user.name}</h1>
-            <p className="email">{user.email}</p>
-            <p className="university">University: {user.sellerUniversity}</p>
-          </div>
-        </div>
-
-        <div className="stats-section">
-          <h3>Your Stats</h3>
-          <div className="stats-grid">
-            <div className="stat-card">
-              <ShoppingBag size={24} />
-              <h4>Orders</h4>
-              <p>{stats.orders}</p>
-            </div>
-            <div className="stat-card">
-              <Tag size={24} />
-              <h4>Listings</h4>
-              <p>{stats.listings}</p>
-            </div>
-            <div className="stat-card">
-              <Heart size={24} />
-              <h4>Wishlist</h4>
-              <p>{stats.wishlist}</p>
+    <div className="container py-5">
+      <h1 className="text-center mb-4">My Dashboard</h1>
+      <div className="row g-4">
+        <div className="col-md-4">
+          <div className="card shadow-sm">
+            <div className="card-body text-center">
+              <h5 className="card-title">Profile</h5>
+              <p className="card-text">Name: {dashboardData.user.name}</p>
+              <p className="card-text">Email: {dashboardData.user.email}</p>
+              <p className="card-text">University: {dashboardData.user.sellerUniversity}</p>
+              <Link to="/profile" className="btn btn-primary btn-sm">Edit Profile</Link>
             </div>
           </div>
         </div>
 
-        <div className="quick-actions">
-          <h3>Quick Actions</h3>
-          <div className="action-buttons">
-            <a href="/sell" className="btn btn-primary">List New Item</a>
-            <a href="/products" className="btn btn-outline-primary">Browse Products</a>
+        <div className="col-md-8">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h5 className="card-title">Stats Overview</h5>
+              <div className="row">
+                <div className="col-6 col-md-4 mb-3">
+                  <div className="card bg-light">
+                    <div className="card-body text-center">
+                      <h6>Total Listings</h6>
+                      <p className="text-success">{dashboardData.listings}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-6 col-md-4 mb-3">
+                  <div className="card bg-light">
+                    <div className="card-body text-center">
+                      <h6>Active Listings</h6>
+                      <p className="text-success">{dashboardData.activeListings}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-6 col-md-4 mb-3">
+                  <div className="card bg-light">
+                    <div className="card-body text-center">
+                      <h6>Sold Items</h6>
+                      <p className="text-success">{dashboardData.soldItems}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-6 col-md-4 mb-3">
+                  <div className="card bg-light">
+                    <div className="card-body text-center">
+                      <h6>Orders</h6>
+                      <p className="text-success">{dashboardData.orders}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </main>
+
+        <div className="col-12">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h5 className="card-title">Recent Listings</h5>
+              {dashboardData.recentListings.length > 0 ? (
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Price</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboardData.recentListings.map((listing) => (
+                      <tr key={listing._id}>
+                        <td>{listing.title}</td>
+                        <td>${listing.price}</td>
+                        <td>{new Date(listing.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : <p className="text-center">No recent listings</p>}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h5 className="card-title">Recent Orders</h5>
+              {dashboardData.recentOrders.length > 0 ? (
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Order ID</th>
+                      <th>Product</th>
+                      <th>Price</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboardData.recentOrders.map((order) => (
+                      <tr key={order._id}>
+                        <td>{order._id.slice(-6)}</td>
+                        <td>{order.product?.title || 'N/A'}</td>
+                        <td>${order.price}</td>
+                        <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : <p className="text-center">No recent orders</p>}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 text-center mt-4">
+          <Link to="/sell" className="btn btn-success me-2">List New Item</Link>
+          <button onClick={logout} className="btn btn-danger">Logout</button>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default Dashboard; // Ensure this line is present

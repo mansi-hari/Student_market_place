@@ -39,7 +39,7 @@ exports.createProduct = async (req, res) => {
       tags,
       location,
       pincode,
-      fullAddress,
+      
       phoneNumber,
       email,
       negotiable,
@@ -71,7 +71,7 @@ exports.createProduct = async (req, res) => {
       photos,
       location,
       pincode,
-      fullAddress,
+      
       phoneNumber,
       email,
       negotiable: negotiable === "true" || negotiable === true,

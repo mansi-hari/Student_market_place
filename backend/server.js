@@ -14,14 +14,14 @@ const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/marketpla
 const PORT = process.env.PORT || 5000;
 
 // Import Routes & Models
-const authRoutes = require("./routes/authRoutes"); 
-const productRoutes = require("./routes/productRoutes"); 
-const wishlistRoutes = require("./routes/wishlistRoutes"); 
-const categoryRoutes = require("./routes/categoryRoutes"); 
-const messageRoutes = require("./routes/messageRoutes"); 
-const locationRoutes = require("./routes/locationRoutes"); 
-
-const { errorHandler } = require("./middleware/errorMiddleware.js"); 
+const authRoutes = require("./routes/authRoutes");
+const productRoutes = require("./routes/productRoutes");
+const wishlistRoutes = require("./routes/wishlistRoutes");
+const categoryRoutes = require("./routes/categoryRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const locationRoutes = require("./routes/locationRoutes");
+const userRoutes = require("./routes/userRoutes"); // Added userRoutes
+const { errorHandler } = require("./middleware/errorMiddleware.js");
 
 // Initialize Express App
 const app = express();
@@ -64,13 +64,13 @@ app.get("/api/states", (req, res) => {
   res.json(statesAndCities);
 });
 
-
 app.use("/api", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/location", locationRoutes);
+app.use("/api/users", userRoutes); // Added userRoutes
 
 // Error Handling Middleware
 app.use(errorHandler);

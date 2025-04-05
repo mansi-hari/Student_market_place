@@ -1,96 +1,117 @@
-import { createContext, useState, useEffect, useContext } from "react"
-import { getCurrentUser, login, logout, signup } from "../utils/auth.service"
+import { createContext, useState, useEffect, useContext } from "react";
+import {
+  getCurrentUser,
+  login,
+  logout,
+  signup,
+  getUserDashboard,
+} from "../utils/auth.service";
 
-
-const AuthContext = createContext()
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null) // Changed from user to currentUser
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Function to set user and update localStorage
   const setUserAndLocalStorage = (userData) => {
     if (userData) {
-      localStorage.setItem("user", JSON.stringify(userData))
-      localStorage.setItem("token", userData.token || userData.data?.token) // Handle both response structures
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("token", userData.token || userData.data?.token || localStorage.getItem("token"));
     } else {
-      localStorage.removeItem("user")
-      localStorage.removeItem("token")
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
     }
-    setCurrentUser(userData)
-  }
+    setCurrentUser(userData);
+  };
 
   useEffect(() => {
-    // Check if user is logged in
     const checkLoggedIn = async () => {
       try {
-        const storedUser = localStorage.getItem("user")
-        const token = localStorage.getItem("token")
+        const storedUser = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
+
+        console.log("Checking login - storedUser:", storedUser, "token:", token);
 
         if (storedUser && token) {
-          // Verify token is still valid
-          const { data } = await getCurrentUser()
-          setUserAndLocalStorage(data) // Update user state and localStorage
+          const { data } = await getCurrentUser();
+          console.log("Fetched user data:", data);
+          if (data) {
+            setUserAndLocalStorage(data);
+          } else {
+            setUserAndLocalStorage(JSON.parse(storedUser)); // Fallback
+          }
+        } else {
+          setUserAndLocalStorage(null);
         }
       } catch (err) {
-        console.error("Auth error:", err)
-        setUserAndLocalStorage(null) // Clear user state and localStorage on error
+        console.error("Auth error during check:", err);
+        setUserAndLocalStorage(null);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    checkLoggedIn()
-  }, [])
+    checkLoggedIn();
+  }, []);
 
   const loginUser = async (credentials) => {
     try {
-      setError(null)
-      const response = await login(credentials)
-      // Handle both response structures (data.user or data.data.user)
+      setError(null);
+      const response = await login(credentials);
       const userData = response.data.user || response.data.data?.user;
-      setUserAndLocalStorage(userData)
-      return response.data
+      setUserAndLocalStorage(userData);
+      return response.data;
     } catch (err) {
-      setError(err.response?.data?.error || "Login failed")
-      throw err
+      setError(err.response?.data?.error || "Login failed");
+      throw err;
     }
-  }
+  };
 
   const signupUser = async (userData) => {
     try {
-      setError(null)
-      const { data } = await signup(userData)
-      setUserAndLocalStorage(data.user) // Update user state and localStorage
-      return data
+      setError(null);
+      const { data } = await signup(userData);
+      setUserAndLocalStorage(data.user);
+      return data;
     } catch (err) {
-      setError(err.response?.data?.error || "Registration failed")
-      throw err
+      setError(err.response?.data?.error || "Registration failed");
+      throw err;
     }
-  }
+  };
 
   const logoutUser = () => {
-    logout()
-    setUserAndLocalStorage(null) // Clear user state and localStorage
-  }
+    logout();
+    setUserAndLocalStorage(null);
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      const response = await getUserDashboard();
+      console.log("Dashboard data:", response);
+      return response;
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+      throw err;
+    }
+  };
 
   return (
     <AuthContext.Provider
       value={{
-        currentUser, // Changed from user to currentUser
+        currentUser,
         loading,
         error,
         login: loginUser,
         signup: signupUser,
         logout: logoutUser,
-        isAuthenticated: !!currentUser, // Check if user is authenticated
+        isAuthenticated: !!currentUser,
+        fetchDashboardData,
       }}
     >
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
-export const useAuth = () => useContext(AuthContext)
-
+export const useAuth = () => useContext(AuthContext);
