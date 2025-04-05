@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
         console.log("Checking login - storedUser:", storedUser, "token:", token);
 
         if (storedUser && token) {
-          const { data } = await getCurrentUser();
+          const data  = await getCurrentUser();
           console.log("Fetched user data:", data);
           if (data) {
             setUserAndLocalStorage(data);

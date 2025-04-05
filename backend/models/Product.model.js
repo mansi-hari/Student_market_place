@@ -16,8 +16,7 @@ const ProductSchema = new mongoose.Schema(
     phoneNumber: { type: String },
     email: { type: String },
     negotiable: { type: Boolean, default: false },
-    seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    sellerUniversity: { type: String, required: true },
+    seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
   },
   { timestamps: true }
 );

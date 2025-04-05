@@ -2,9 +2,10 @@ const express = require("express");
 const router = express.Router();
 const productController = require("../controllers/Product.controller");
 const upload = require("../middleware/uploadMiddleware");
+const {protect} = require("../middleware/authMiddleware")
 
 // Create a new product with image upload (up to 5 images)
-router.post("/products", upload.array("photos", 5), productController.createProduct);
+router.post("/products", upload.array("photos", 5),protect, productController.createProduct);
 
 // Get all products
 router.get("/products", productController.getAllProducts);

@@ -112,11 +112,13 @@ router.post("/login", async (req, res) => {
 // ✅ Get Logged-in User (Protected Route)
 router.get("/me", protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const userId = req.user.id;
+    const user = await User.findById(userId).select("-password");
+    console.log("i am consoling the user : ",user)
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
-    res.json({ success: true, user });
+    return res.status(200).json({ success: true, user });
   } catch (error) {
     console.error("Get User Error:", error);
     res.status(500).json({ success: false, message: "Internal server error", error: error.message });

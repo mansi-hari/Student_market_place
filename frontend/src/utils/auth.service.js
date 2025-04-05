@@ -41,7 +41,8 @@ export const logout = () => {
 
 export const getCurrentUser = async () => {
   const response = await axiosInstance.get("/auth/me");
-  return response.data;
+  console.log("response fetched is : ",response.data.user)
+  return response.data.user;
 };
 
 export const updateProfile = async (userData) => {

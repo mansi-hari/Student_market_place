@@ -32,11 +32,11 @@ const Browse = () => {
 
   const categories = [
     "All Categories",
-    "Services",
-    "Stationary",
-    "Bikes",
-    "Furniture & Decor",
-    "Appliances",
+    "Electronics",
+    "Furniture",
+    "Books",
+    "Vehicles",
+    "Others",
   ];
 
   useEffect(() => {

@@ -26,6 +26,8 @@ const colleges = [
 // Create a product
 exports.createProduct = async (req, res) => {
   try {
+    const userId = req.user.id;
+    console.log("userid in seller page is : ",userId)
     console.log("Create product request received:", req.body);
     console.log("Files received:", req.files);
 
@@ -61,7 +63,7 @@ exports.createProduct = async (req, res) => {
 
     const photos = req.files ? req.files.map((file) => file.filename) : [];
 
-    const newProduct = new Product({
+    const newProduct = await Product.create({
       title,
       category: category === "Others" ? otherCategory : category,
       price: Number(price),
@@ -75,11 +77,10 @@ exports.createProduct = async (req, res) => {
       phoneNumber,
       email,
       negotiable: negotiable === "true" || negotiable === true,
-      seller: req.user ? req.user._id : null,
+      seller: userId
     });
 
     console.log("Saving product:", newProduct);
-    await newProduct.save();
     console.log("Product saved successfully");
 
     res.status(201).json({
