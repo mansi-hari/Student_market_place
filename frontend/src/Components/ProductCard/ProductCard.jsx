@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAuth } from "../../Context/AuthContext";
 import { Link } from "react-router-dom";
-import { MapPin, Heart, ShoppingCart } from "lucide-react"; // Added Heart and ShoppingCart
+import { MapPin, Heart, ShoppingCart } from "lucide-react"; 
 
 const ProductCard = ({ product, isInFavorites, isInCart, toggleFavorite, handleAddToCart, handleImageClick }) => {
   const { registerIntent, currentUser } = useAuth();

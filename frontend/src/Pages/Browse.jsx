@@ -38,7 +38,8 @@ const Browse = () => {
     "Electronics",
     "Furniture",
     "Books",
-    "Vehicles",
+    "Transport",
+    "Services",
     "Others",
   ];
 

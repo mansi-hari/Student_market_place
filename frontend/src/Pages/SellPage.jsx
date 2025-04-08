@@ -28,10 +28,10 @@ const SellPage = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prevData) => ({
+      ...prevData,
       [name]: type === "checkbox" ? checked : value,
-    });
+    }));
   };
 
   const handleFileChange = (e) => {
@@ -39,21 +39,20 @@ const SellPage = () => {
 
     // Limit to 5 images
     if (filesArray.length > 5) {
-      toast.error("You can upload a maximum of 5 photos.");
+      toast.error("You may upload a maximum of 5 photos.");
       return;
     }
 
-    setFormData({
-      ...formData,
+    setFormData((prevData) => ({
+      ...prevData,
       photos: filesArray,
-    });
+    }));
 
     // Generate preview URLs
     const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
 
     // Revoke old preview URLs to avoid memory leaks
     previewImages.forEach((url) => URL.revokeObjectURL(url));
-
     setPreviewImages(newPreviews);
   };
 
@@ -72,7 +71,7 @@ const SellPage = () => {
     }
 
     if (!formData.pincode.trim() || isNaN(formData.pincode)) {
-      toast.error("Valid Pincode is required.");
+      toast.error("A valid pincode is required.");
       return;
     }
 
@@ -95,7 +94,7 @@ const SellPage = () => {
 
     // Require at least one contact method
     if (!formData.phoneNumber && !formData.email) {
-      toast.error("Please provide either a phone number or email for contact.");
+      toast.error("Please provide at least one contact method (phone number or email).");
       return;
     }
 
@@ -131,7 +130,6 @@ const SellPage = () => {
 
       if (response.data.success) {
         toast.success("Item listed successfully!");
-
         // Reset form
         setFormData({
           title: "",
@@ -148,30 +146,29 @@ const SellPage = () => {
           email: "",
           negotiable: false,
         });
-
         // Clear preview images
         previewImages.forEach((url) => URL.revokeObjectURL(url));
         setPreviewImages([]);
       } else {
-        toast.error(response.data.message || "Error listing item!");
+        toast.error(response.data.message || "An error occurred while listing the item.");
       }
     } catch (error) {
       console.error("Error listing item:", error.response ? error.response.data : error.message);
-      toast.error(error.response?.data?.message || "Server error, try again later!");
+      toast.error(error.response?.data?.message || "A server error occurred. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="sell-page-container container mt-5">
+    <div className="sell-page-container">
       <h2 className="mb-4">List Your Item</h2>
       <form onSubmit={handleSubmit}>
         <div className="card mb-4">
           <div className="card-header">Basic Information</div>
           <div className="card-body">
-            <div className="mb-3">
-              <label htmlFor="title" className="form-label">Title</label>
+            <div className="form-group">
+              <label htmlFor="title" className="form-label">Item Title</label>
               <input
                 type="text"
                 className="form-control"
@@ -184,7 +181,7 @@ const SellPage = () => {
             </div>
 
             <div className="row mb-3">
-              <div className="col-md-6">
+              <div className="col-md-6 form-group">
                 <label htmlFor="category" className="form-label">Category</label>
                 <select
                   className="form-select"
@@ -205,8 +202,8 @@ const SellPage = () => {
               </div>
 
               {formData.category === "Others" && (
-                <div className="col-md-6">
-                  <label htmlFor="otherCategory" className="form-label">Other Category</label>
+                <div className="col-md-6 form-group">
+                  <label htmlFor="otherCategory" className="form-label">Specify Other Category</label>
                   <input
                     type="text"
                     className="form-control"
@@ -221,7 +218,7 @@ const SellPage = () => {
             </div>
 
             <div className="row mb-3">
-              <div className="col-md-6">
+              <div className="col-md-6 form-group">
                 <label htmlFor="price" className="form-label">Price (₹)</label>
                 <input
                   type="number"
@@ -234,7 +231,7 @@ const SellPage = () => {
                 />
               </div>
 
-              <div className="col-md-6">
+              <div className="col-md-6 form-group">
                 <label htmlFor="condition" className="form-label">Condition</label>
                 <select
                   className="form-select"
@@ -251,7 +248,7 @@ const SellPage = () => {
               </div>
             </div>
 
-            <div className="mb-3">
+            <div className="form-group">
               <label htmlFor="description" className="form-label">Description</label>
               <textarea
                 className="form-control"
@@ -264,8 +261,8 @@ const SellPage = () => {
               ></textarea>
             </div>
 
-            <div className="mb-3">
-              <label htmlFor="tags" className="form-label">Tags (comma separated)</label>
+            <div className="form-group">
+              <label htmlFor="tags" className="form-label">Tags (comma-separated)</label>
               <input
                 type="text"
                 className="form-control"
@@ -273,8 +270,9 @@ const SellPage = () => {
                 name="tags"
                 value={formData.tags}
                 onChange={handleChange}
-                placeholder="e.g. laptop, electronics, hp"
+                placeholder="e.g., laptop, electronics, hp"
               />
+              <small className="text-muted">Separate tags with commas for better searchability.</small>
             </div>
 
             <div className="form-check mb-3">
@@ -292,10 +290,10 @@ const SellPage = () => {
         </div>
 
         <div className="card mb-4">
-          <div className="card-header">Contact Information</div>
+          <div className="card-header">Contact Details</div>
           <div className="card-body">
             <div className="row mb-3">
-              <div className="col-md-6">
+              <div className="col-md-6 form-group">
                 <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
                 <input
                   type="tel"
@@ -306,10 +304,10 @@ const SellPage = () => {
                   onChange={handleChange}
                   placeholder="10-digit mobile number"
                 />
-                <small className="text-muted">At least one contact method is required</small>
+                <small className="text-muted">At least one contact method is required.</small>
               </div>
 
-              <div className="col-md-6">
+              <div className="col-md-6 form-group">
                 <label htmlFor="email" className="form-label">Email Address</label>
                 <input
                   type="email"
@@ -326,10 +324,10 @@ const SellPage = () => {
         </div>
 
         <div className="card mb-4">
-          <div className="card-header">Photos</div>
+          <div className="card-header">Product Images</div>
           <div className="card-body">
-            <div className="mb-3">
-              <label htmlFor="photos" className="form-label">Upload Photos (Max 5)</label>
+            <div className="form-group">
+              <label htmlFor="photos" className="form-label">Upload Images (Maximum 5)</label>
               <input
                 type="file"
                 className="form-control"
@@ -339,12 +337,12 @@ const SellPage = () => {
                 multiple
                 accept="image/*"
               />
-              <div className="form-text">Please upload clear images of your product</div>
+              <small className="text-muted">Please upload clear and high-quality images of your product.</small>
             </div>
 
             {previewImages.length > 0 && (
-              <div className="mb-3">
-                <label className="form-label">Photo Previews</label>
+              <div className="form-group">
+                <label className="form-label">Image Previews</label>
                 <div className="row">
                   {previewImages.map((url, index) => (
                     <div key={index} className="col-md-3 mb-2">
@@ -352,7 +350,7 @@ const SellPage = () => {
                         src={url || "/placeholder.svg"}
                         alt={`Preview ${index + 1}`}
                         className="img-thumbnail"
-                        style={{ height: "150px", objectFit: "cover" }}
+                        style={{ height: "150px", objectFit: "cover", width: "100%" }}
                       />
                     </div>
                   ))}
@@ -363,10 +361,10 @@ const SellPage = () => {
         </div>
 
         <div className="card mb-4">
-          <div className="card-header">Location</div>
+          <div className="card-header">Location Details</div>
           <div className="card-body">
             <div className="row mb-3">
-              <div className="col-md-6">
+              <div className="col-md-6 form-group">
                 <label htmlFor="location" className="form-label">City/Area</label>
                 <input
                   type="text"
@@ -379,7 +377,7 @@ const SellPage = () => {
                 />
               </div>
 
-              <div className="col-md-6">
+              <div className="col-md-6 form-group">
                 <label htmlFor="pincode" className="form-label">Pincode</label>
                 <input
                   type="text"
@@ -400,10 +398,10 @@ const SellPage = () => {
             {isSubmitting ? (
               <>
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Listing Item...
+                Submitting Listing...
               </>
             ) : (
-              "List Item for Sale"
+              "Submit Listing"
             )}
           </button>
         </div>

@@ -242,7 +242,7 @@ const Navbar = () => {
                     <span>My Profile</span>
                   </Link>
                   <Link to="/my-ads" className="sidebar-item" onClick={handleSidebarItemClick}>
-                    <FaAd className="sidebar-icon" />
+                    <FaShoppingCart className="sidebar-icon" />
                     <span>My Cart</span>
                   </Link>
                   <Link to="/messages" className="sidebar-item" onClick={handleSidebarItemClick}>

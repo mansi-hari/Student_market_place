@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -33,14 +31,12 @@ const ProductDetail = () => {
         console.log("Product Data:", response.data); // Debug the product data
         setProduct(response.data);
 
-        // Check if product is in wishlist
+    
         checkWishlistStatus(response.data._id);
-
-        // Fetch similar products
+   
         fetchSimilarProducts(response.data.category);
 
-        // Load cart from localStorage
-        const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+                const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
         setCart(savedCart);
 
         setLoading(false);
