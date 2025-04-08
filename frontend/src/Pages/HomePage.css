@@ -40,29 +40,33 @@
 
 .wishlist-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: white;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
+  top: 10px; /* Slightly reduced for better fit */
+  right: 10px; /* Consistent with card edges */
+  background: rgba(255, 255, 255, 0.95); /* Slightly more opaque for clarity */
+  border: 1px solid #e5e7eb; /* Lighter border for subtlety */
+  border-radius: 50%; /* Kept circular */
+  width: 34px; /* Slightly increased for better proportion */
+  height: 34px; /* Slightly increased for better proportion */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s, background-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Softer shadow */
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out, color 0.3s ease-in-out;
   z-index: 2;
+  padding: 2px; /* Tiny padding for comfort */
 }
 
 .wishlist-button:hover {
-  transform: scale(1.1);
-  background-color: #fff5f5;
+  transform: scale(1.2); /* Slightly larger hover effect */
+  background-color: #fef2f2; /* Softer red hover background */
+  color: #dc2626; /* Richer red for contrast */
 }
 
 .wishlist-button.active {
-  background-color: #fff5f5;
+  background-color: #fee2e2; /* Softer active background */
+  color: #dc2626; /* Consistent active color */
+  border-color: #fecaca; /* Matching active border */
 }
 
 /* Featured Content */
@@ -353,7 +357,63 @@
   color: #e53e3e;
   border-color: #feb2b2;
 }
+.chat-container {
+  margin-top: 20px;
+}
 
+.message-list {
+  height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.message {
+  margin: 5px 0;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.sent {
+  background-color: #e0f7fa;
+  text-align: right;
+}
+
+.received {
+  background-color: #f0f0f0;
+}
+
+.message-input {
+  display: flex;
+  gap: 10px;
+}
+
+.message-input input {
+  flex: 1;
+  padding: 5px;
+}
+
+.message-input button {
+  padding: 5px 10px;
+  background-color: #6b46c1;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.wishlist-btn {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #4a5568;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.wishlist-btn.active {
+  background-color: #e53e3e;
+}
 /* Category Card */
 .category-card {
   display: flex;
@@ -409,4 +469,3 @@
     grid-template-columns: 1fr;
   }
 }
-

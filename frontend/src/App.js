@@ -19,11 +19,14 @@ import CategoryPage from './Pages/CategoryPage';
 import ProductDetail from './Pages/ProductDetail';
 import ForgotPassword from './Pages/ForgotPassword';
 import Dashboard from './Pages/Dashboard'; 
+import BuyerDashboard from './Pages/BuyerDashboard';
 import Footer from './Components/Footer/Footer';
 import ChatPage from './Pages/ChatPage';
 import './App.css';
 import AdminPanel from './Pages/AdminPanel';
 import ProfilePage from "./Pages/ProfilePage"
+import Cart from './Pages/Cart';
+
 
 function App() {
   const token = localStorage.getItem('token');
@@ -68,7 +71,10 @@ const AppContent = () => {
         <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} />
         <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<Dashboard />} /> 
+        <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
+        <Route path="/cart" element={<Cart />} />
         <Route path="/admin" element={<AdminPanel />} />
+     
         <Route path="/profile/:userId" element={<ProfilePage />} />
       </Routes>
       <Footer />

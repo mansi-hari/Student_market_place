@@ -5,7 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 const Dashboard = () => {
-  const { currentUser, logout, fetchDashboardData } = useAuth();
+  const { currentUser, logout, fetchDashboardData } = useAuth() || {};
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState({
     user: {},
@@ -15,21 +15,25 @@ const Dashboard = () => {
     orders: 0,
     recentOrders: [],
     recentListings: [],
+    purchasedItems: [],
+    activeInterests: [],
   });
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [buyerEmail, setBuyerEmail] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       if (currentUser) {
         try {
           setLoading(true);
-          console.log("Fetching dashboard for user:", currentUser);
           const response = await fetchDashboardData();
-          console.log("Dashboard response:", response);
-          if (response.success) {
-            setDashboardData(response.data);
+          if (response?.success) {
+            setDashboardData(response.data || {});
           } else {
-            toast.error(response.message || "Failed to load dashboard");
+            toast.error(response?.message || "Failed to load dashboard");
           }
         } catch (error) {
           console.error("Error fetching dashboard:", error);
@@ -41,9 +45,44 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [currentUser, fetchDashboardData]);
+
+  const handleMarkAsSold = (productId) => {
+    setSelectedProductId(productId);
+    setShowModal(true);
+    setErrorMessage("");
+  };
+
+  const confirmSale = async () => {
+    try {
+      console.log("Sending request to:", `http://localhost:5000/api/products/${selectedProductId}/sold`);
+      const response = await fetch(`http://localhost:5000/api/products/${selectedProductId}/sold`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ buyerEmail }),
+      });
+      const data = await response.json();
+      console.log("Response data:", data);
+      if (data.success) {
+        toast.success("Item marked as sold!");
+        setDashboardData((prev) => ({
+          ...prev,
+          recentListings: prev.recentListings.filter((item) => item._id !== selectedProductId),
+          soldItems: prev.soldItems + 1,
+        }));
+        setShowModal(false);
+      } else {
+        setErrorMessage(data.error || data.message || "Failed to mark as sold");
+      }
+    } catch (error) {
+      console.error("Sale error:", error);
+      setErrorMessage(error.message || "Failed to mark as sold");
+    }
+  };
 
   if (loading) return <div className="text-center py-5">Loading...</div>;
   if (!currentUser) return (
@@ -60,56 +99,82 @@ const Dashboard = () => {
           <div className="card shadow-sm">
             <div className="card-body text-center">
               <h5 className="card-title">Profile</h5>
-              <p className="card-text">Name: {dashboardData.user.name}</p>
-              <p className="card-text">Email: {dashboardData.user.email}</p>
-              <p className="card-text">University: {dashboardData.user.sellerUniversity}</p>
+              <p className="card-text">Name: {dashboardData.user.name || "N/A"}</p>
+              <p className="card-text">Email: {dashboardData.user.email || "N/A"}</p>
+              <p className="text-center">University: {dashboardData.user.sellerUniversity || "N/A"}</p>
               <Link to="/profile" className="btn btn-primary btn-sm">Edit Profile</Link>
             </div>
           </div>
         </div>
-
         <div className="col-md-8">
           <div className="card shadow-sm">
             <div className="card-body">
               <h5 className="card-title">Stats Overview</h5>
               <div className="row">
-                <div className="col-6 col-md-4 mb-3">
-                  <div className="card bg-light">
-                    <div className="card-body text-center">
-                      <h6>Total Listings</h6>
-                      <p className="text-success">{dashboardData.listings}</p>
+                {dashboardData.listings > 0 && (
+                  <div className="col-6 col-md-4 mb-3">
+                    <div className="card bg-light">
+                      <div className="card-body text-center">
+                        <h6>Total Listings</h6>
+                        <p className="text-success">{dashboardData.listings}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-6 col-md-4 mb-3">
-                  <div className="card bg-light">
-                    <div className="card-body text-center">
-                      <h6>Active Listings</h6>
-                      <p className="text-success">{dashboardData.activeListings}</p>
+                )}
+                {dashboardData.activeListings > 0 && (
+                  <div className="col-6 col-md-4 mb-3">
+                    <div className="card bg-light">
+                      <div className="card-body text-center">
+                        <h6>Active Listings</h6>
+                        <p className="text-success">{dashboardData.activeListings}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-6 col-md-4 mb-3">
-                  <div className="card bg-light">
-                    <div className="card-body text-center">
-                      <h6>Sold Items</h6>
-                      <p className="text-success">{dashboardData.soldItems}</p>
+                )}
+                {dashboardData.soldItems > 0 && (
+                  <div className="col-6 col-md-4 mb-3">
+                    <div className="card bg-light">
+                      <div className="card-body text-center">
+                        <h6>Sold Items</h6>
+                        <p className="text-success">{dashboardData.soldItems}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-6 col-md-4 mb-3">
-                  <div className="card bg-light">
-                    <div className="card-body text-center">
-                      <h6>Orders</h6>
-                      <p className="text-success">{dashboardData.orders}</p>
+                )}
+                {dashboardData.orders > 0 && (
+                  <div className="col-6 col-md-4 mb-3">
+                    <div className="card bg-light">
+                      <div className="card-body text-center">
+                        <h6>Orders</h6>
+                        <p className="text-success">{dashboardData.orders}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
+                {dashboardData.purchasedItems.length > 0 && (
+                  <div className="col-6 col-md-4 mb-3">
+                    <div className="card bg-light">
+                      <div className="card-body text-center">
+                        <h6>Purchased Items</h6>
+                        <p className="text-success">{dashboardData.purchasedItems.length}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {dashboardData.activeInterests.length > 0 && (
+                  <div className="col-6 col-md-4 mb-3">
+                    <div className="card bg-light">
+                      <div className="card-body text-center">
+                        <h6>Active Interests</h6>
+                        <p className="text-success">{dashboardData.activeInterests.length}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-
         <div className="col-12">
           <div className="card shadow-sm">
             <div className="card-body">
@@ -121,6 +186,7 @@ const Dashboard = () => {
                       <th>Title</th>
                       <th>Price</th>
                       <th>Date</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -129,6 +195,7 @@ const Dashboard = () => {
                         <td>{listing.title}</td>
                         <td>${listing.price}</td>
                         <td>{new Date(listing.createdAt).toLocaleDateString()}</td>
+                        {!listing.isSold && <td><button onClick={() => handleMarkAsSold(listing._id)}>Mark as Sold</button></td>}
                       </tr>
                     ))}
                   </tbody>
@@ -137,7 +204,6 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
         <div className="col-12">
           <div className="card shadow-sm">
             <div className="card-body">
@@ -167,14 +233,81 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
+        <div className="col-12">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h5 className="card-title">Purchased Items</h5>
+              {dashboardData.purchasedItems.length > 0 ? (
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Seller</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboardData.purchasedItems.map((item) => (
+                      <tr key={item._id}>
+                        <td>{item.title}</td>
+                        <td>{item.seller.name}</td>
+                        <td>{new Date(item.updatedAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : <p className="text-center">No purchased items</p>}
+            </div>
+          </div>
+        </div>
+        <div className="col-12">
+          <div className="card shadow-sm">
+            <div className="card-body">
+              <h5 className="card-title">Active Interests</h5>
+              {dashboardData.activeInterests.length > 0 ? (
+                <table className="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Seller</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboardData.activeInterests.map((item) => (
+                      <tr key={item._id}>
+                        <td>{item.title}</td>
+                        <td>{item.seller.name}</td>
+                        <td>{new Date(item.updatedAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : <p className="text-center">No active interests</p>}
+            </div>
+          </div>
+        </div>
         <div className="col-12 text-center mt-4">
           <Link to="/sell" className="btn btn-success me-2">List New Item</Link>
           <button onClick={logout} className="btn btn-danger">Logout</button>
         </div>
       </div>
+      {showModal && (
+        <div className="modal">
+          <h4>Confirm Sale</h4>
+          <input
+            type="email"
+            value={buyerEmail}
+            onChange={(e) => setBuyerEmail(e.target.value)}
+            placeholder="Enter buyer email"
+          />
+          {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
+          <button onClick={confirmSale}>Confirm Sale</button>
+          <button onClick={() => setShowModal(false)}>Cancel</button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default Dashboard; // Ensure this line is present
+export default Dashboard;

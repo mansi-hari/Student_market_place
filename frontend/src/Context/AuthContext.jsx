@@ -1,11 +1,6 @@
+
 import { createContext, useState, useEffect, useContext } from "react";
-import {
-  getCurrentUser,
-  login,
-  logout,
-  signup,
-  getUserDashboard,
-} from "../utils/auth.service";
+import { getCurrentUser, login, logout, signup, getUserDashboard } from "../utils/auth.service";
 
 const AuthContext = createContext();
 
@@ -34,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         console.log("Checking login - storedUser:", storedUser, "token:", token);
 
         if (storedUser && token) {
-          const data  = await getCurrentUser();
+          const data = await getCurrentUser();
           console.log("Fetched user data:", data);
           if (data) {
             setUserAndLocalStorage(data);
@@ -96,6 +91,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const registerIntent = async (productId) => {
+    try {
+      const response = await fetch(`/api/products/${productId}/intent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("Intent registration error:", err);
+      throw err;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -107,6 +119,7 @@ export const AuthProvider = ({ children }) => {
         logout: logoutUser,
         isAuthenticated: !!currentUser,
         fetchDashboardData,
+        registerIntent,
       }}
     >
       {children}

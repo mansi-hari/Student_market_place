@@ -1,6 +1,6 @@
 const User = require("../models/User.model")
 const Product = require("../models/Product.model")
-const Category = require("../models/Category.model")
+
 const Message = require("../models/Message.model")
 const Conversation = require("../models/Conversation.model")
 const Setting = require("../models/Setting.model")
@@ -13,36 +13,46 @@ const { createError } = require("../utils/errorUtil")
  */
 exports.getDashboardStats = async (req, res, next) => {
   try {
-    // Get counts
-    const totalUsers = await User.countDocuments()
-    const totalProducts = await Product.countDocuments()
-    const totalMessages = await Message.countDocuments()
-    const totalTransactions = 0 // Placeholder for future implementation
+    const userId = req.user._id;
+    const totalListings = await Product.countDocuments({ seller: userId });
+    const activeListings = await Product.countDocuments({ seller: userId, isApproved: true, isSold: false });
+    const soldItems = await Product.countDocuments({ seller: userId, isSold: true });
 
-    // Get recent users
-    const recentUsers = await User.find().select("name email createdAt").sort({ createdAt: -1 }).limit(5)
-
-    // Get recent products
-    const recentProducts = await Product.find()
-      .select("title price seller createdAt")
-      .populate("seller", "name")
+    const recentListings = await Product.find({ seller: userId })
       .sort({ createdAt: -1 })
       .limit(5)
+      .populate("seller", "name email");
 
     res.status(200).json({
-      stats: {
-        totalUsers,
-        totalProducts,
-        totalMessages,
-        totalTransactions,
+      success: true,
+      data: {
+        user: req.user,
+        listings: totalListings,
+        activeListings,
+        soldItems,
+        orders: 0, // Placeholder
+        recentOrders: [], // Placeholder
+        recentListings,
       },
-      recentUsers,
-      recentProducts,
-    })
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
+
+// New endpoint for buyer dashboard
+exports.getBuyerDashboard = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const purchasedItems = await Product.find({ buyer: userId, isSold: true })
+      .populate("seller", "name email");
+    const activeInterests = await Product.find({ intentBy: userId, isSold: false })
+      .populate("seller", "name email");
+    res.status(200).json({ success: true, data: { purchasedItems, activeInterests } });
+  } catch (error) {
+    next(error);
+  }
+};
 
 /**
  * Get all users

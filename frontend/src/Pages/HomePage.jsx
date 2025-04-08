@@ -1,24 +1,26 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Link, useNavigate } from "react-router-dom"
-import axios from "axios"
-import { toast } from "react-hot-toast"
-import { Book, Laptop, Sofa, PenTool, Bike, MoreHorizontal, Heart, MessageCircle, Phone, Mail } from "lucide-react"
-import CategoryCard from "../Components/CategoryCard"
-import HowItWorks from "../Components/HowItWorksCard"
-import "./HomePage.css"
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { Book, Laptop, Sofa, PenTool, Bike, MoreHorizontal, Heart, MessageCircle } from "lucide-react";
+import CategoryCard from "../Components/CategoryCard";
+import HowItWorks from "../Components/HowItWorksCard";
+import "./HomePage.css";
 
 const HomePage = () => {
-  const navigate = useNavigate()
-  const [products, setProducts] = useState([])
-  const [featuredProducts, setFeaturedProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [wishlist, setWishlist] = useState([])
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [showContactInfo, setShowContactInfo] = useState(false)
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [wishlist, setWishlist] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const [messages, setMessages] = useState([]); // New state for messages
+  const [newMessage, setNewMessage] = useState(""); // New state for typing message
 
   const [categories, setCategories] = useState([
     {
@@ -63,172 +65,180 @@ const HomePage = () => {
       link: "/products/Others",
       description: "Sports equipment, musical instruments and more",
     },
-  ])
+  ]);
 
-  
-  // Fetch all products and featured products when component mounts
+  // Fetch products and messages
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
 
         // Fetch all products
-        const productsResponse = await axios.get("http://localhost:5000/api/products")
-        console.log("Products fetched:", productsResponse.data)
+        const productsResponse = await axios.get("http://localhost:5000/api/products");
+        console.log("Products fetched:", productsResponse.data);
 
         if (Array.isArray(productsResponse.data)) {
-          setProducts(productsResponse.data)
+          setProducts(productsResponse.data);
 
           // Update category counts
-          const updatedCategories = [...categories]
-
-          // Count products in each category
-          const categoryCounts = {}
+          const updatedCategories = [...categories];
+          const categoryCounts = {};
           productsResponse.data.forEach((product) => {
-            const category = product.category
-            categoryCounts[category] = (categoryCounts[category] || 0) + 1
-          })
-
-          // Update the categories array with counts
+            const category = product.category;
+            categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+          });
           updatedCategories.forEach((category, index) => {
-            const count = categoryCounts[category.name] || 0
+            const count = categoryCounts[category.name] || 0;
             updatedCategories[index] = {
               ...category,
               count: `${count} item${count !== 1 ? "s" : ""}`,
-            }
-          })
-
-          setCategories(updatedCategories)
+            };
+          });
+          setCategories(updatedCategories);
         }
 
         // Fetch featured products
-        const featuredResponse = await axios.get("http://localhost:5000/api/products/featured")
+        const featuredResponse = await axios.get("http://localhost:5000/api/products/featured");
         if (Array.isArray(featuredResponse.data)) {
-          setFeaturedProducts(featuredResponse.data)
+          setFeaturedProducts(featuredResponse.data);
         }
 
-        setLoading(false)
+        setLoading(false);
       } catch (err) {
-        console.error("Error fetching data:", err)
-        setError("Failed to load products")
-        setLoading(false)
-        toast.error("Failed to load products")
+        console.error("Error fetching data:", err);
+        setError("Failed to load products");
+        setLoading(false);
+        toast.error("Failed to load products");
       }
+    };
+
+    const fetchMessages = async (productId) => {
+      const token = localStorage.getItem("token");
+      if (token && selectedProduct) {
+        try {
+          const response = await axios.get(`http://localhost:5000/api/messages/${productId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.data.success) {
+            setMessages(response.data.data);
+          }
+        } catch (error) {
+          console.error("Error fetching messages:", error);
+          toast.error("Failed to load messages");
+        }
+      }
+    };
+
+    fetchData();
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+
+    if (token && selectedProduct) {
+      fetchMessages(selectedProduct._id);
+      const interval = setInterval(() => fetchMessages(selectedProduct._id), 5000); // Poll every 5 seconds
+      return () => clearInterval(interval); // Cleanup
     }
+  }, [selectedProduct]);
 
-    fetchData()
-
-    // Check if user is logged in
-    const token = localStorage.getItem("token")
-    setIsLoggedIn(!!token)
-
-    // Fetch wishlist if user is logged in
-    if (token) {
-      fetchWishlist(token)
-    }
-  }, [])
-
-  // Fetch wishlist from API
+  // Fetch wishlist
   const fetchWishlist = async (token) => {
     try {
       const response = await axios.get("http://localhost:5000/api/wishlist", {
         headers: { Authorization: `Bearer ${token}` },
-      })
-
+      });
       if (response.data.success) {
-        // Extract product IDs from the wishlist
-        const wishlistProductIds = response.data.data.products.map((product) => product._id)
-        setWishlist(wishlistProductIds)
+        const wishlistProductIds = response.data.data.products.map((product) => product._id);
+        setWishlist(wishlistProductIds);
       }
     } catch (error) {
-      console.error("Error fetching wishlist:", error)
+      console.error("Error fetching wishlist:", error);
     }
-  }
+  };
 
-  // Function to get products by category
-  const getProductsByCategory = (categoryName) => {
-    return products.filter((product) => product.category === categoryName)
-  }
-
+  // Handle wishlist
   const handleAddToWishlist = async (product, e) => {
-    e.stopPropagation() // Prevent the product click event
-
-    // Check if user is logged in
-    const token = localStorage.getItem("token")
+    e.stopPropagation();
+    const token = localStorage.getItem("token");
     if (!isLoggedIn || !token) {
-      toast.error("Please login to add items to your wishlist")
-      navigate("/auth/login")
-      return
+      toast.error("Please login to add items to your wishlist");
+      navigate("/auth/login");
+      return;
     }
-
-    // Check if product is already in wishlist
-    const isInWishlist = wishlist.includes(product._id)
-
+    const isInWishlist = wishlist.includes(product._id); // Check if in wishlist
     try {
       if (isInWishlist) {
-        // Remove from wishlist
         await axios.delete(`http://localhost:5000/api/wishlist/${product._id}`, {
           headers: { Authorization: `Bearer ${token}` },
-        })
-
-        // Update local state
-        setWishlist(wishlist.filter((id) => id !== product._id))
-        toast.success(`${product.title} removed from wishlist`)
+        });
+        setWishlist(wishlist.filter((id) => id !== product._id));
+        toast.success(`${product.title} removed from wishlist`);
       } else {
-        // Add to wishlist
         await axios.post(
           `http://localhost:5000/api/wishlist/${product._id}`,
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
-          },
-        )
-
-        // Update local state
-        setWishlist([...wishlist, product._id])
-        toast.success(`${product.title} added to wishlist`)
+          }
+        );
+        setWishlist([...wishlist, product._id]);
+        toast.success(`${product.title} added to wishlist`);
       }
     } catch (error) {
-      console.error("Error updating wishlist:", error)
-      toast.error("Failed to update wishlist")
+      console.error("Error updating wishlist:", error);
+      toast.error("Failed to update wishlist");
     }
-  }
-
-  const handleProductClick = (product) => {
-    setSelectedProduct(product)
-    setShowContactInfo(false)
-  }
-
-  const handleCloseProductModal = () => {
-    setSelectedProduct(null)
-    setShowContactInfo(false)
-  }
-
-  const handleContactSeller = () => {
-    if (!isLoggedIn) {
-      toast.error("Please login to contact the seller")
-      navigate("/auth/login")
-      return
-    }
-
-    setShowContactInfo(true)
-  }
-
-  const handleStartChat = (sellerId) => {
-    if (!isLoggedIn) {
-      toast.error("Please login to chat with the seller")
-      navigate("/auth/login")
-      return
-    }
-
-    // Navigate to chat page with seller ID
-    navigate(`/chat/${sellerId}`)
-  }
+  };
 
   // Check if a product is in the wishlist
   const isInWishlist = (productId) => {
-    return wishlist.includes(productId)
-  }
+    return wishlist.includes(productId);
+  };
+
+  // Handle product click and chat
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+    setShowContactInfo(true); // Open chat by default
+    setMessages([]); // Reset messages
+  };
+
+  const handleCloseProductModal = () => {
+    setSelectedProduct(null);
+    setShowContactInfo(false);
+    setMessages([]);
+    setNewMessage("");
+  };
+
+  const handleSendMessage = async () => {
+    const token = localStorage.getItem("token");
+    if (!isLoggedIn || !token || !selectedProduct) {
+      toast.error("Please login to send a message");
+      navigate("/auth/login");
+      return;
+    }
+    try {
+      await axios.post(
+        "http://localhost:5000/api/messages",
+        {
+          receiver: selectedProduct.seller._id,
+          product: selectedProduct._id,
+          content: newMessage,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNewMessage(""); // Clear input
+      toast.success("Message sent!");
+      // Fetch updated messages
+      const response = await axios.get(`http://localhost:5000/api/messages/${selectedProduct._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (response.data.success) {
+        setMessages(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast.error("Failed to send message");
+    }
+  };
 
   const StarRating = ({ rating }) => {
     return (
@@ -245,8 +255,8 @@ const HomePage = () => {
           </span>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div>
@@ -288,19 +298,19 @@ const HomePage = () => {
                         alt={product.title}
                         className="cropped-image"
                         onError={(e) => {
-                          e.target.onerror = null
-                          e.target.src = "https://via.placeholder.com/200"
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/200";
                         }}
                       />
                     ) : (
                       <div className="no-image-placeholder">No Image</div>
                     )}
                     <button
-                      className={`wishlist-button ${isInWishlist(product._id) ? "active" : ""}`}
+                      className={`wishlist-button ${isInWishlist(product._id) ? "active" : ""}`} // Fixed with isInWishlist
                       onClick={(e) => handleAddToWishlist(product, e)}
-                      aria-label={isInWishlist(product._id) ? "Remove from wishlist" : "Add to wishlist"}
+                      aria-label={isInWishlist(product._id) ? "Remove from wishlist" : "Add to wishlist"} // Fixed
                     >
-                      <Heart size={20} color="#ff4d4d" fill={isInWishlist(product._id) ? "#ff4d4d" : "none"} />
+                      <Heart size={20} color="#ff4d4d" fill={isInWishlist(product._id) ? "#ff4d4d" : "none"} /> {/* Fixed */}
                     </button>
                   </div>
                   <div className="featured-content">
@@ -321,7 +331,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Product Details Modal */}
+      {/* Product Details Modal with Chat */}
       {selectedProduct && (
         <div className="modal" onClick={handleCloseProductModal}>
           <div className="modal-content product-modal" onClick={(e) => e.stopPropagation()}>
@@ -335,8 +345,8 @@ const HomePage = () => {
                   alt={selectedProduct.title}
                   className="product-modal-image"
                   onError={(e) => {
-                    e.target.onerror = null
-                    e.target.src = "https://via.placeholder.com/400"
+                    e.target.onerror = null;
+                    e.target.src = "https://via.placeholder.com/400";
                   }}
                 />
               ) : (
@@ -353,46 +363,35 @@ const HomePage = () => {
                 </p>
                 <p className="product-modal-description">{selectedProduct.description}</p>
 
-                {showContactInfo ? (
-                  <div className="contact-info-container">
-                    <h3>Contact Information</h3>
-                    <div className="contact-methods">
-                      {selectedProduct.phoneNumber && (
-                        <div className="contact-method">
-                          <Phone size={20} />
-                          <span>{selectedProduct.phoneNumber}</span>
-                        </div>
-                      )}
-                      {selectedProduct.email && (
-                        <div className="contact-method">
-                          <Mail size={20} />
-                          <span>{selectedProduct.email}</span>
-                        </div>
-                      )}
-                      {selectedProduct.seller && (
-                        <button
-                          className="btn btn-outline-primary mt-2"
-                          onClick={() => handleStartChat(selectedProduct.seller._id)}
-                        >
-                          <MessageCircle size={20} className="me-2" />
-                          Chat with Seller
-                        </button>
-                      )}
-                    </div>
+                <div className="chat-container">
+                  <h3>Chat with {selectedProduct.seller?.name || "Anonymous Seller"}</h3>
+                  <div className="message-list">
+                    {messages.map((msg, index) => (
+                      <div
+                        key={index}
+                        className={`message ${msg.sender._id === (localStorage.getItem("userId") || "").toString() ? "sent" : "received"}`}
+                      >
+                        <p>{msg.content}</p>
+                        <span>{new Date(msg.createdAt).toLocaleTimeString()}</span>
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <div className="product-modal-actions">
-                    <button className="contact-seller-btn" onClick={handleContactSeller}>
-                      Contact Seller
-                    </button>
-                    <button
-                      className={`wishlist-btn ${isInWishlist(selectedProduct._id) ? "active" : ""}`}
-                      onClick={(e) => handleAddToWishlist(selectedProduct, e)}
-                    >
-                      {isInWishlist(selectedProduct._id) ? "Remove from Wishlist" : "Add to Wishlist"}
-                    </button>
+                  <div className="message-input">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type your message..."
+                    />
+                    <button onClick={handleSendMessage}>Send</button>
                   </div>
-                )}
+                </div>
+                <button
+                  className={`wishlist-btn ${isInWishlist(selectedProduct._id) ? "active" : ""}`} // Fixed
+                  onClick={(e) => handleAddToWishlist(selectedProduct, e)}
+                >
+                  {isInWishlist(selectedProduct._id) ? "Remove from Wishlist" : "Add to Wishlist"} {/* Fixed */}
+                </button>
               </div>
             </div>
           </div>
@@ -401,10 +400,8 @@ const HomePage = () => {
 
       {/* How It Works */}
       <HowItWorks />
+    </div>
+  );
+};
 
-     </div>
-  )
-}
-
-export default HomePage
-
+export default HomePage;

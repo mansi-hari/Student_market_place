@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { FaMapMarkerAlt, FaHeart, FaRegHeart, FaShare, FaArrowLeft } from "react-icons/fa";
+import {
+  FaMapMarkerAlt,
+  FaHeart,
+  FaRegHeart,
+  FaShare,
+  FaArrowLeft,
+  FaShoppingCart,
+} from "react-icons/fa";
 import "./ProductDetail.css";
 
 const ProductDetail = () => {
@@ -16,6 +23,7 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [inWishlist, setInWishlist] = useState(false);
   const [similarProducts, setSimilarProducts] = useState([]);
+  const [cart, setCart] = useState([]); // New state for cart items
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -30,6 +38,10 @@ const ProductDetail = () => {
 
         // Fetch similar products
         fetchSimilarProducts(response.data.category);
+
+        // Load cart from localStorage
+        const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+        setCart(savedCart);
 
         setLoading(false);
       } catch (error) {
@@ -98,6 +110,29 @@ const ProductDetail = () => {
     } catch (error) {
       console.error("Error updating wishlist:", error);
       toast.error("Failed to update wishlist");
+    }
+  };
+
+  const handleAddToCart = (product, e) => {
+    e.stopPropagation();
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("Please login to add items to your cart");
+      navigate("/auth/login");
+      return;
+    }
+
+    const isInCart = cart.some((item) => item._id === product._id);
+
+    if (!isInCart) {
+      const updatedCart = [...cart, product];
+      setCart(updatedCart);
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
+      toast.success(`${product.title} added to cart`);
+    } else {
+      toast.info(`${product.title} is already in your cart`);
     }
   };
 
@@ -271,7 +306,7 @@ const ProductDetail = () => {
             <button
               className="btn btn-primary btn-lg contact-btn"
               onClick={contactSeller}
-              disabled={!product.seller || !product.seller._id || product.seller.name === "Anonymous"} // Disable button if seller is anonymous
+              disabled={!product.seller || !product.seller._id || product.seller.name === "Anonymous"}
             >
               Contact Seller
             </button>
@@ -290,6 +325,13 @@ const ProductDetail = () => {
                   Add to Wishlist
                 </>
               )}
+            </button>
+            <button
+              className={`btn btn-success btn-lg add-to-cart-btn ${cart.some((item) => item._id === product._id) ? "disabled" : ""}`}
+              onClick={(e) => handleAddToCart(product, e)}
+              disabled={cart.some((item) => item._id === product._id)}
+            >
+              <FaShoppingCart className="me-2" /> {cart.some((item) => item._id === product._id) ? "In Cart" : "Add to Cart"}
             </button>
             <button className="btn btn-outline-secondary share-btn" onClick={handleShare}>
               <FaShare />
@@ -369,7 +411,7 @@ const ProductDetail = () => {
                   <div className="card-body">
                     <h5 className="card-title">{similarProduct.title}</h5>
                     <p className="card-text product-price">₹{similarProduct.price}</p>
-                    <Link to={`/product/${similarProduct._id}`} className="btn btn-primary w-100">
+                    <Link to={`/product/${similarProduct._id}`} className="btn btn-primary w-100 view-details-btn">
                       View Details
                     </Link>
                   </div>

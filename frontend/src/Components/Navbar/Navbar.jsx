@@ -85,6 +85,7 @@ const Navbar = () => {
       navigate(`/products?${searchParams.toString()}`);
       setSearch("");
       setLocationInput(""); // Clear location input after search
+      setIsSidebarOpen(false); // Close sidebar after search
     } else {
       toast.error("Please enter a search term");
     }
@@ -97,6 +98,18 @@ const Navbar = () => {
     setUser(null);
     toast.success("Logged out successfully");
     navigate("/");
+    setIsSidebarOpen(false); // Close sidebar after logout
+  };
+
+  // Function to close sidebar after any navigation
+  const handleSidebarItemClick = () => {
+    setIsSidebarOpen(false);
+  };
+
+  // Combined handler for logout button
+  const handleLogoutAndClose = () => {
+    handleLogout(); // Execute logout logic
+    handleSidebarItemClick(); // Close sidebar
   };
 
   return (
@@ -169,38 +182,38 @@ const Navbar = () => {
           <li className="menu-item" onClick={() => setIsSidebarOpen(true)}>
             <FaBars className="menu-icon" />
           </li>
-          <li onClick={() => setMenu("Home")} className={menu === "Home" ? "active" : ""}>
+          <li onClick={() => { setMenu("Home"); handleSidebarItemClick(); }} className={menu === "Home" ? "active" : ""}>
             <Link to="/">Home</Link>
             {menu === "Home" && <hr />}
           </li>
-          <li onClick={() => setMenu("Browse")} className={menu === "Browse" ? "active" : ""}>
+          <li onClick={() => { setMenu("Browse"); handleSidebarItemClick(); }} className={menu === "Browse" ? "active" : ""}>
             <Link to="/products">Browse Products</Link>
             {menu === "Browse" && <hr />}
           </li>
-          <li onClick={() => setMenu("Sell")} className={menu === "Sell" ? "active" : ""}>
+          <li onClick={() => { setMenu("Sell"); handleSidebarItemClick(); }} className={menu === "Sell" ? "active" : ""}>
             <Link to="/sell">Sell</Link>
             {menu === "Sell" && <hr />}
           </li>
-          <li onClick={() => setMenu("Wishlist")} className={menu === "Wishlist" ? "active" : ""}>
+          <li onClick={() => { setMenu("Wishlist"); handleSidebarItemClick(); }} className={menu === "Wishlist" ? "active" : ""}>
             <Link to="/wishlist">Wishlist</Link>
             {menu === "Wishlist" && <hr />}
           </li>
           <div className="auth-container">
             {isLoggedIn ? (
               <>
-                <Link to="/profile" className="auth-box">
+                <Link to="/profile" className="auth-box" onClick={handleSidebarItemClick}>
                   <FaUser className="auth-icon" /> {user?.name || "Profile"}
                 </Link>
-                <button onClick={handleLogout} className="auth-box logout-btn">
+                <button onClick={handleLogoutAndClose} className="auth-box logout-btn">
                   <FaSignOutAlt className="auth-icon" /> Logout
                 </button>
               </>
             ) : (
               <>
-                <Link to="/auth/login" className="auth-box">
+                <Link to="/auth/login" className="auth-box" onClick={handleSidebarItemClick}>
                   <FaUser className="auth-icon" /> Login
                 </Link>
-                <Link to="/auth/signup" className="auth-box">
+                <Link to="/auth/signup" className="auth-box" onClick={handleSidebarItemClick}>
                   <FaUserPlus className="auth-icon" /> Signup
                 </Link>
               </>
@@ -213,66 +226,63 @@ const Navbar = () => {
         <div className="sidebar">
           <div className="sidebar-header">
             <img src={logo || "/placeholder.svg"} alt="Logo" className="sidebar-logo" />
-            <p>Student Marketplace - Mohan Nagar</p>
+            <p>Student Marketplace - Mohan Nagar, Ghaziabad</p>
             <FaTimes className="close-icon" onClick={() => setIsSidebarOpen(false)} />
           </div>
           <div className="sidebar-content">
             <div className="sidebar-section">
               {isLoggedIn ? (
                 <>
-                <Link to="/dashboard" className="sidebar-item">
-                       <FaUser className="sidebar-icon" />
-                       <span>Dashboard</span>
-                   </Link>
-                  <Link to="/profile" className="sidebar-item">
+                  <Link to="/dashboard" className="sidebar-item" onClick={handleSidebarItemClick}>
+                    <FaUser className="sidebar-icon" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <Link to="/profile" className="sidebar-item" onClick={handleSidebarItemClick}>
                     <FaUser className="sidebar-icon" />
                     <span>My Profile</span>
                   </Link>
-                  <button onClick={handleLogout} className="sidebar-item logout-item">
+                  <Link to="/my-ads" className="sidebar-item" onClick={handleSidebarItemClick}>
+                    <FaAd className="sidebar-icon" />
+                    <span>My Cart</span>
+                  </Link>
+                  <Link to="/messages" className="sidebar-item" onClick={handleSidebarItemClick}>
+                    <FaComments className="sidebar-icon" />
+                    <span>My Chats</span>
+                  </Link>
+                  
+                  <button onClick={handleLogoutAndClose} className="sidebar-item logout-item">
                     <FaSignOutAlt className="sidebar-icon" />
                     <span>Logout</span>
                   </button>
                 </>
               ) : (
-                <Link to="/auth/login" className="sidebar-item">
+                <Link to="/auth/login" className="sidebar-item" onClick={handleSidebarItemClick}>
                   <FaUser className="sidebar-icon" />
                   <span>Login/Register</span>
                 </Link>
               )}
-              <Link to="/my-ads" className="sidebar-item">
-                <FaAd className="sidebar-icon" />
-                <span>My Ads</span>
-              </Link>
-              <Link to="/messages" className="sidebar-item">
-                <FaComments className="sidebar-icon" />
-                <span>My Chats</span>
-              </Link>
-              <Link to="/orders" className="sidebar-item">
-                <FaMoneyCheckAlt className="sidebar-icon" />
-                <span>Orders and Payments</span>
-              </Link>
             </div>
             <div className="sidebar-section">
               <h4>Categories</h4>
-              <Link to="/products/services" className="sidebar-item">
+              <Link to="/products/services" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Services</span>
               </Link>
-              <Link to="/products/stationary" className="sidebar-item">
+              <Link to="/products/stationary" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
-                <span>Stationary</span>
+                <span>Furniture</span>
               </Link>
-              <Link to="/products/bikes" className="sidebar-item">
+              <Link to="/products/bikes" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
-                <span>Bikes</span>
+                <span>Transport</span>
               </Link>
-              <Link to="/products/furniture" className="sidebar-item">
+              <Link to="/products/furniture" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
-                <span>Furniture & Decor</span>
+                <span>Electronics</span>
               </Link>
-              <Link to="/products/appliances" className="sidebar-item">
+              <Link to="/products/appliances" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
-                <span>Appliances, ACs</span>
+                <span>Others</span>
               </Link>
             </div>
           </div>

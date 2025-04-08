@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
-import { Heart, Grid, List, MapPin, X } from "lucide-react";
+import { Heart, Grid, List, MapPin, X, ShoppingCart } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../Context/AuthContext";
 import "./Browse.css";
 
 const Browse = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { category } = useParams();
+  const { registerIntent, currentUser } = useAuth();
   const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState([]);
+  const [cart, setCart] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [sortOption, setSortOption] = useState("newest");
   const [displayProducts, setDisplayProducts] = useState([]);
@@ -45,6 +48,9 @@ const Browse = () => {
 
     const savedFavorites = JSON.parse(localStorage.getItem("wishlist") || "[]");
     setFavorites(savedFavorites);
+
+    const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+    setCart(savedCart);
 
     fetchProducts();
   }, [category]);
@@ -89,7 +95,6 @@ const Browse = () => {
   const applyFilters = (products = allProducts) => {
     let filteredProducts = [...products];
 
-    // Apply search filter from URL
     const urlParams = new URLSearchParams(location.search);
     const searchTerm = urlParams.get("search")?.toLowerCase() || "";
     const locationFilter = urlParams.get("college")?.toLowerCase() || "";
@@ -109,14 +114,12 @@ const Browse = () => {
       );
     }
 
-    // Apply category filter
     if (selectedCategory && selectedCategory !== "All Categories") {
       filteredProducts = filteredProducts.filter(
         (product) => product.category === selectedCategory
       );
     }
 
-    // Apply price range filter
     if (priceRange.min !== "") {
       filteredProducts = filteredProducts.filter((product) => product.price >= Number(priceRange.min));
     }
@@ -124,7 +127,6 @@ const Browse = () => {
       filteredProducts = filteredProducts.filter((product) => product.price <= Number(priceRange.max));
     }
 
-    // Apply condition filter
     const selectedConditionsList = Object.keys(selectedConditions).filter(
       (condition) => selectedConditions[condition]
     );
@@ -134,7 +136,6 @@ const Browse = () => {
       );
     }
 
-    // Apply sorting
     switch (sortOption) {
       case "price-low":
         filteredProducts.sort((a, b) => a.price - b.price);
@@ -220,6 +221,29 @@ const Browse = () => {
     }
   };
 
+  const handleAddToCart = (product, e) => {
+    e.stopPropagation();
+
+    const token = localStorage.getItem("token");
+
+    if (!isLoggedIn || !token) {
+      toast.error("Please login to add items to your cart");
+      navigate("/auth/login");
+      return;
+    }
+
+    const isInCart = cart.some((item) => item._id === product._id);
+
+    if (!isInCart) {
+      const updatedCart = [...cart, { ...product }];
+      setCart(updatedCart);
+      localStorage.setItem("cart", JSON.stringify(updatedCart));
+      toast.success(`${product.title} added to cart`);
+    } else {
+      toast.info(`${product.title} is already in your cart`);
+    }
+  };
+
   const handleImageClick = (product) => {
     setSelectedProduct(product);
   };
@@ -242,7 +266,41 @@ const Browse = () => {
     return favorites.some((item) => item._id === productId);
   };
 
-  // Pagination Logic
+  const isInCart = (productId) => {
+    return cart.some((item) => item._id === productId);
+  };
+
+  const handleIntent = async (product) => {
+    if (!isLoggedIn) {
+      toast.error("Please login to register intent");
+      navigate("/auth/login");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    try {
+      console.log("Registering intent for product:", product._id, "Current User:", currentUser?._id);
+      const response = await axios.post(
+        `http://localhost:5000/api/products/${product._id}/intent`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Intent response:", response.data);
+      if (response.data.success) {
+        toast.success("Intent registered successfully!");
+      } else {
+        toast.error(response.data.message || "Failed to register intent");
+      }
+    } catch (error) {
+      console.error("Intent error:", error.response ? error.response.data : error.message);
+      toast.error(`Failed to register intent due to an error: ${error.response ? error.response.data : error.message}`);
+    }
+  };
+
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = displayProducts.slice(indexOfFirstProduct, indexOfLastProduct);
@@ -414,12 +472,23 @@ const Browse = () => {
                     <span className="product-date">{new Date(product.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div className="product-actions">
-                    <button className="btn btn-sm btn-primary" onClick={() => handleImageClick(product)}>
-                      View Details
-                    </button>
-                    <Link to={`/product/${product._id}`} className="btn btn-sm btn-outline-primary">
+                    <Link to={`/product/${product._id}`} className="btn btn-primary btn-sm full-details-btn">
                       Full Details
                     </Link>
+                    <button
+                      onClick={() => handleIntent(product)}
+                      className="intent-to-buy-btn btn btn-sm"
+                      disabled={product.intentBy || product.seller.toString() === currentUser?._id}
+                    >
+                      Intent to Buy
+                    </button>
+                    <button
+                      className={`btn btn-sm btn-success add-to-cart-btn ${isInCart(product._id) ? "disabled" : ""}`}
+                      onClick={(e) => handleAddToCart(product, e)}
+                      disabled={isInCart(product._id)}
+                    >
+                      <ShoppingCart size={16} /> {isInCart(product._id) ? "In Cart" : "Add to Cart"}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -494,6 +563,16 @@ const Browse = () => {
               </p>
               <p className="modal-product-description">{selectedProduct.description}</p>
               <div className="modal-actions">
+                <Link to={`/product/${selectedProduct._id}`} className="btn btn-primary full-details-btn">
+                  Full Details
+                </Link>
+                <button
+                  className={`btn btn-success add-to-cart-btn ${isInCart(selectedProduct._id) ? "disabled" : ""}`}
+                  onClick={(e) => handleAddToCart(selectedProduct, e)}
+                  disabled={isInCart(selectedProduct._id)}
+                >
+                  <ShoppingCart size={16} /> {isInCart(selectedProduct._id) ? "In Cart" : "Add to Cart"}
+                </button>
                 <button className="contact-seller" onClick={handleContactSeller}>
                   Contact Seller
                 </button>
