@@ -33,8 +33,8 @@ exports.getDashboardStats = async (req, res, next) => {
         listings: totalListings,
         activeListings,
         soldItems,
-        orders: 0, // Placeholder
-        recentOrders: [], // Placeholder
+        orders: 0, 
+        recentOrders: [], 
         recentListings,
       },
     });
@@ -50,7 +50,7 @@ exports.getDashboardStats = async (req, res, next) => {
  */
 exports.getAdminDashboardStats = async (req, res, next) => {
   try {
-    const totalProducts = await Product.countDocuments({ isSold: false }); // Restored to count only available products
+    const totalProducts = await Product.countDocuments({ isSold: false }); 
     const totalUsers = await User.countDocuments();
     const pendingIntents = await Product.countDocuments({
       intentBy: { $ne: null },
@@ -126,11 +126,7 @@ exports.updateUser = async (req, res, next) => {
   }
 };
 
-/**
- * Delete user
- * @route DELETE /api/admin/users/:id
- * @access Private/Admin
- */
+
 exports.deleteUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
@@ -150,11 +146,7 @@ exports.deleteUser = async (req, res, next) => {
   }
 };
 
-/**
- * Get all products
- * @route GET /api/admin/products
- * @access Private/Admin
- */
+
 exports.getAllProducts = async (req, res, next) => {
   try {
     const products = await Product.find()
@@ -167,11 +159,7 @@ exports.getAllProducts = async (req, res, next) => {
   }
 };
 
-/**
- * Update product
- * @route PUT /api/admin/products/:id
- * @access Private/Admin
- */
+
 exports.updateProduct = async (req, res, next) => {
   try {
     const { title, price, description, category, condition, isAvailable, isFeatured } = req.body;

@@ -30,7 +30,7 @@ exports.register = async (req, res, next) => {
     sendEmail(email, subject, body);
 
     const token = jwt.sign(
-      { id: user._id, role: user.role }, // Added role to JWT
+      { id: user._id, role: user.role },  
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );

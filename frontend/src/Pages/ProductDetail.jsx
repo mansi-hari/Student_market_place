@@ -21,24 +21,24 @@ const ProductDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [inWishlist, setInWishlist] = useState(false);
   const [similarProducts, setSimilarProducts] = useState([]);
-  const [cart, setCart] = useState([]); // New state for cart items
+  const [cart, setCart] = useState([]);
+  const [showModal, setShowModal] = useState(false); // Modal state
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
         const response = await axios.get(`http://localhost:5000/api/products/${productId}`);
-        console.log("Product Data:", response.data); // Debug the product data
+        console.log("Product Data:", response.data);
         setProduct(response.data);
 
-    
         checkWishlistStatus(response.data._id);
-   
         fetchSimilarProducts(response.data.category);
 
-                const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
+        const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
         setCart(savedCart);
 
+        console.log("Seller Profile Image:", response.data.seller?.profileImage);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching product", error);
@@ -68,8 +68,7 @@ const ProductDetail = () => {
   const fetchSimilarProducts = async (category) => {
     try {
       const response = await axios.get(`http://localhost:5000/api/products?category=${category}&limit=4`);
-      console.log("Similar Products:", response.data); // Debug similar products
-      // Filter out the current product
+      console.log("Similar Products:", response.data);
       const filtered = response.data.filter((p) => p._id !== productId);
       setSimilarProducts(filtered.slice(0, 3));
     } catch (error) {
@@ -143,7 +142,6 @@ const ProductDetail = () => {
         .then(() => console.log("Shared successfully"))
         .catch((error) => console.log("Error sharing:", error));
     } else {
-      // Fallback - copy to clipboard
       navigator.clipboard.writeText(window.location.href);
       toast.success("Link copied to clipboard!");
     }
@@ -157,19 +155,16 @@ const ProductDetail = () => {
       return;
     }
 
-    // Check if product and product.seller exist
     if (!product || !product.seller) {
       toast.error("Seller information is not available for this product.");
       return;
     }
 
-    // Check if the seller is anonymous or lacks an _id
     if (!product.seller._id || product.seller.name === "Anonymous") {
       toast.error("Cannot contact anonymous sellers.");
       return;
     }
 
-    // Navigate to chat with seller
     navigate(`/chat/${product.seller._id}`);
   };
 
@@ -327,7 +322,8 @@ const ProductDetail = () => {
               onClick={(e) => handleAddToCart(product, e)}
               disabled={cart.some((item) => item._id === product._id)}
             >
-              <FaShoppingCart className="me-2" /> {cart.some((item) => item._id === product._id) ? "In Cart" : "Add to Cart"}
+              <FaShoppingCart className="me-2" />{" "}
+              {cart.some((item) => item._id === product._id) ? "In Cart" : "Add to Cart"}
             </button>
             <button className="btn btn-outline-secondary share-btn" onClick={handleShare}>
               <FaShare />
@@ -358,11 +354,18 @@ const ProductDetail = () => {
               <div className="seller-avatar">
                 {product.seller?.profileImage ? (
                   <img
-                    src={`http://localhost:5000/uploads/${product.seller.profileImage}`}
+                    src={
+                      product.seller.profileImage.startsWith("http")
+                        ? product.seller.profileImage
+                        : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+                    }
                     alt={product.seller.name}
+                    onClick={() => setShowModal(true)}
+                    style={{ cursor: "pointer" }}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "https://via.placeholder.com/50?text=No+Image";
+                      console.log("Seller image error:", e.target.src, e.message);
                     }}
                   />
                 ) : (
@@ -415,6 +418,50 @@ const ProductDetail = () => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Modal for Full-Size Image */}
+      {showModal && product.seller?.profileImage && (
+        <div
+          className="modal"
+          onClick={() => setShowModal(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <img
+            src={
+              product.seller.profileImage.startsWith("http")
+                ? product.seller.profileImage
+                : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+            }
+            alt={product.seller.name}
+            style={{
+              maxWidth: "250px", // Increased from 200px to 250px
+              maxHeight: "250px", // Increased from 200px to 250px
+              objectFit: "cover",
+              border: "2px solid #fff",
+              boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)",
+              borderRadius: "50%",
+              transition: "transform 0.2s",
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://via.placeholder.com/400?text=No+Image";
+              console.log("Modal image error:", e.target.src, e.message);
+              setShowModal(false);
+            }}
+          />
         </div>
       )}
     </div>

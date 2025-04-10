@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserPlus, Camera, ShoppingBag } from "lucide-react";
-import { Link } from 'react-router-dom'; // Import Link from react-router-dom
+import { Link } from 'react-router-dom'; 
 
 const HowItWorks = () => {
   const steps = [
@@ -8,13 +8,13 @@ const HowItWorks = () => {
       icon: <UserPlus size={32} />,
       title: "Sign Up",
       description: "Create your account in seconds using your student email",
-      link: "/auth/signup", // The path for the Sign Up page
+      link: "/auth/signup", 
     },
     {
       icon: <Camera size={32} />,
       title: "List Your Items",
       description: "Take photos and list your items for sale in minutes",
-      link: "/sell", // The path for the List Your Items page
+      link: "/sell", 
     },
     {
       icon: <ShoppingBag size={32} />,

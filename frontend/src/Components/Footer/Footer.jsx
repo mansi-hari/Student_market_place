@@ -27,7 +27,7 @@ const Footer = () => {
           <div className="col-md-3">
             <h5 className="text-uppercase fw-bold">Categories</h5>
             <ul className="list-unstyled mt-3">
-              {['Textbooks', 'Electronics', 'Furniture', 'Clothing', 'Services'].map(category => (
+              {['Textbooks', 'Electronics', 'Furniture', 'Transport', 'Services'].map(category => (
                 <li key={category} className="mb-2">
                   <Link to={`/category/${category}`} className="text-secondary text-decoration-none">{category}</Link>
                 </li>
@@ -39,7 +39,7 @@ const Footer = () => {
           <div className="col-md-3">
             <h5 className="text-uppercase fw-bold">Quick Links</h5>
             <ul className="list-unstyled mt-3">
-              {['Sell an Item', 'My Wishlist', 'Messages', 'My Profile', 'My Orders'].map(link => (
+              {['Sell an Item', 'My Wishlist', 'Categories', 'My Profile', 'My Cart'].map(link => (
                 <li key={link} className="mb-2">
                   <Link to={`/${link.toLowerCase().replace(/ /g, '-')}`} className="text-secondary text-decoration-none">{link}</Link>
                 </li>

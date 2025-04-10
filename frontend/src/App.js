@@ -22,7 +22,7 @@ import AdminPanel from './Pages/AdminPanel';
 import Footer from './Components/Footer/Footer';
 import ChatPage from './Pages/ChatPage';
 import './App.css';
-import ProfilePage from './Pages/ProfilePage';
+import Profile from './Pages/Profile';
 import Cart from './Pages/Cart';
 
 function App() {
@@ -51,9 +51,29 @@ const AppContent = () => {
   const navigate = useNavigate();
   console.log("Current User in AppContent (Path:", location.pathname, "):", currentUser);
 
+  
+  const routes = [
+    { Path: "/", Component: "HomePage" },
+    { Path: "/products", Component: "Browse" },
+    { Path: "/browse/:category", Component: "Browse" },
+    { Path: "/products/category/:categoryName", Component: "CategoryPage" },
+    { Path: "/product/:productId", Component: "ProductDetail" },
+    { Path: "/chat/:sellerId", Component: "ChatPage" },
+    { Path: "/auth/login", Component: "Login" },
+    { Path: "/auth/signup", Component: "Signup" },
+    { Path: "/sell", Component: "SellPage (Protected)" },
+    { Path: "/wishlist", Component: "WishlistPage (Protected)" },
+    { Path: "/cart", Component: "Cart" },
+    { Path: "/dashboard", Component: "Dashboard" },
+    { Path: "/admin", Component: "AdminPanel" },
+    { Path: "/profile", Component: "Profile" },
+    { Path: "/profile/:userId", Component: "Profile" },
+  ];
+
+  console.table(routes, ['Path', 'Component']); 
+
   useEffect(() => {
     if (currentUser && location.pathname === '/auth/login') {
-      // Fallback: If role is undefined, default to dashboard
       const userRole = currentUser.role || 'buyer';
       console.log("Redirecting to:", userRole === 'admin' ? '/admin' : '/dashboard');
       navigate(userRole === 'admin' ? '/admin' : '/dashboard');
@@ -97,7 +117,15 @@ const AppContent = () => {
               : <Navigate to={currentUser ? '/dashboard' : '/auth/login'} replace />
           }
         />
-        <Route path="/profile/:userId" element={<ProfilePage />} />
+        <Route
+          path="/profile"
+          element={
+            currentUser
+              ? <Profile userId={currentUser._id} />
+              : <Navigate to="/auth/login" replace />
+          }
+        />
+        <Route path="/profile/:userId" element={<Profile />} />
       </Routes>
       <Footer />
     </div>

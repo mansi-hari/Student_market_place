@@ -1,4 +1,3 @@
-// Load Environment Variables First
 require("dotenv").config({ path: "./.env" });
 
 // Import Modules

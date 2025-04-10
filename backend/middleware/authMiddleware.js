@@ -2,9 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User.model');
 const { createError } = require('../utils/errorUtil');
 
-/**
- * Protect routes - Verify JWT token and set req.user
- */
+
 exports.protect = async (req, res, next) => {
   try {
     let token;
@@ -25,7 +23,7 @@ exports.protect = async (req, res, next) => {
     try {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+      console.log('Decoded Token:', decoded);
       // Set req.user
       req.user = await User.findById(decoded.id).select('-password');
 
@@ -38,13 +36,12 @@ exports.protect = async (req, res, next) => {
       return next(createError(401, 'Not authorized to access this route'));
     }
   } catch (error) {
+    console.error('Middleware Error:', error);
     next(error);
   }
 };
 
-/**
- * Admin middleware - Check if user is admin
- */
+
 exports.admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     next();

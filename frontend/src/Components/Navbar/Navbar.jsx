@@ -82,7 +82,7 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    await logout(); // Await logout to ensure completion
+    await logout(); 
     navigate("/"); // Navigate after logout
     setIsSidebarOpen(false);
   };
