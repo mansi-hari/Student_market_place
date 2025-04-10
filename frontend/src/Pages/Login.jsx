@@ -1,61 +1,49 @@
-import { useState } from "react"
-import axios from "axios"
-import { useNavigate, Link, useLocation } from "react-router-dom"
-import { toast } from "react-hot-toast"
-import { initializeSocket } from "../utils/socket"; // Adjust the path as needed
-
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { useAuth } from "../Context/AuthContext"; // Import useAuth
+import { initializeSocket } from "../utils/socket";
 
 const Login = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const location = useLocation()
-  const navigate = useNavigate()
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { login } = useAuth(); // Use login function from AuthContext
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"
+  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-  
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password,
-      });
-  
-      console.log("Login API Response:", response.data); 
 
-      if (response.data.success) {
-        const token = response.data.token;
-        const user = response.data.user;
-  
-        if (!token || !user) {
-          throw new Error("Invalid response structure");
-        }
-  
-        // Store token and user
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-  
+    try {
+      const credentials = { email, password };
+      const response = await login(credentials); // Call AuthContext login
+
+      if (response.success) {
+        const token = response.token; // Directly access token from response
+        const user = response.user; // Directly access user from response
+
         // Initialize socket connection
         initializeSocket(token);
-  
+
         toast.success("Login successful!");
-        navigate("/");
+        // Let App.js handle redirect based on currentUser
+        navigate("/"); // Temporary redirect, will be overridden by App.js
       } else {
-        setError(response.data.message || "Login failed");
+        setError(response.message || "Login failed");
       }
     } catch (err) {
-      console.error("Login error:",  err.response?.data || err.message);
-      setError(err.response?.data?.message || "Invalid credentials. Please try again.");
+      console.error("Login error:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   return (
     <div className="container py-5">
@@ -112,7 +100,7 @@ const Login = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

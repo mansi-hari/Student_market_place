@@ -45,15 +45,11 @@ exports.protect = async (req, res, next) => {
 /**
  * Admin middleware - Check if user is admin
  */
-
-// Admin middleware
 exports.admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
-    next()
+    next();
   } else {
-    res.status(401)
-    throw new Error("Not authorized as an admin")
+    res.status(401).json({ message: "Not authorized as an admin" });
+    // throw new Error("Not authorized as an admin"); // Replaced with JSON response
   }
-}
-
-
+};

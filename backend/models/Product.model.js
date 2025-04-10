@@ -1,4 +1,3 @@
-// C:\Users\Dell\OneDrive\Desktop\student\backend\models\Product.model.js
 const mongoose = require("mongoose");
 
 const ProductSchema = new mongoose.Schema(

@@ -18,17 +18,17 @@ import {
   FaSignOutAlt,
   FaMapMarkerAlt,
 } from "react-icons/fa";
-import { colleges } from "../../utils/colleges"; // Importing colleges from utils
+import { colleges } from "../../utils/colleges";
+import { useAuth } from "../../Context/AuthContext";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { currentUser, logout, loading } = useAuth();
   const [menu, setMenu] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [locationInput, setLocationInput] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
@@ -37,18 +37,8 @@ const Navbar = () => {
     else if (path.includes("/products")) setMenu("Browse");
     else if (path.includes("/sell")) setMenu("Sell");
     else if (path.includes("/wishlist")) setMenu("Wishlist");
+    else if (path.includes("/admin")) setMenu("Admin");
     else setMenu("");
-
-    const token = localStorage.getItem("token");
-    const userData = localStorage.getItem("user");
-
-    if (token && userData) {
-      setIsLoggedIn(true);
-      setUser(JSON.parse(userData));
-    } else {
-      setIsLoggedIn(false);
-      setUser(null);
-    }
   }, [location.pathname]);
 
   const handleLocationChange = (event) => {
@@ -84,33 +74,31 @@ const Navbar = () => {
       }
       navigate(`/products?${searchParams.toString()}`);
       setSearch("");
-      setLocationInput(""); // Clear location input after search
-      setIsSidebarOpen(false); // Close sidebar after search
+      setLocationInput("");
+      setIsSidebarOpen(false);
     } else {
       toast.error("Please enter a search term");
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    setUser(null);
-    toast.success("Logged out successfully");
-    navigate("/");
-    setIsSidebarOpen(false); // Close sidebar after logout
+  const handleLogout = async () => {
+    await logout(); // Await logout to ensure completion
+    navigate("/"); // Navigate after logout
+    setIsSidebarOpen(false);
   };
 
-  // Function to close sidebar after any navigation
   const handleSidebarItemClick = () => {
     setIsSidebarOpen(false);
   };
 
-  // Combined handler for logout button
   const handleLogoutAndClose = () => {
-    handleLogout(); // Execute logout logic
-    handleSidebarItemClick(); // Close sidebar
+    handleLogout();
+    handleSidebarItemClick();
   };
+
+  if (loading) {
+    return <div className="navbar-container">Loading...</div>;
+  }
 
   return (
     <div className="navbar-container">
@@ -139,7 +127,7 @@ const Navbar = () => {
               <ul className="suggestions-list">
                 {suggestions.map((suggestion, index) => (
                   <li
-                    key={index} // Using index as key since colleges array doesn't have unique IDs
+                    key={index}
                     onClick={() => handleSuggestionClick(suggestion)}
                     className="suggestion-item"
                   >
@@ -182,27 +170,39 @@ const Navbar = () => {
           <li className="menu-item" onClick={() => setIsSidebarOpen(true)}>
             <FaBars className="menu-icon" />
           </li>
-          <li onClick={() => { setMenu("Home"); handleSidebarItemClick(); }} className={menu === "Home" ? "active" : ""}>
+          <li
+            onClick={() => { setMenu("Home"); handleSidebarItemClick(); }}
+            className={menu === "Home" ? "active" : ""}
+          >
             <Link to="/">Home</Link>
             {menu === "Home" && <hr />}
           </li>
-          <li onClick={() => { setMenu("Browse"); handleSidebarItemClick(); }} className={menu === "Browse" ? "active" : ""}>
+          <li
+            onClick={() => { setMenu("Browse"); handleSidebarItemClick(); }}
+            className={menu === "Browse" ? "active" : ""}
+          >
             <Link to="/products">Browse Products</Link>
             {menu === "Browse" && <hr />}
           </li>
-          <li onClick={() => { setMenu("Sell"); handleSidebarItemClick(); }} className={menu === "Sell" ? "active" : ""}>
+          <li
+            onClick={() => { setMenu("Sell"); handleSidebarItemClick(); }}
+            className={menu === "Sell" ? "active" : ""}
+          >
             <Link to="/sell">Sell</Link>
             {menu === "Sell" && <hr />}
           </li>
-          <li onClick={() => { setMenu("Wishlist"); handleSidebarItemClick(); }} className={menu === "Wishlist" ? "active" : ""}>
+          <li
+            onClick={() => { setMenu("Wishlist"); handleSidebarItemClick(); }}
+            className={menu === "Wishlist" ? "active" : ""}
+          >
             <Link to="/wishlist">Wishlist</Link>
             {menu === "Wishlist" && <hr />}
           </li>
           <div className="auth-container">
-            {isLoggedIn ? (
+            {currentUser ? (
               <>
                 <Link to="/profile" className="auth-box" onClick={handleSidebarItemClick}>
-                  <FaUser className="auth-icon" /> {user?.name || "Profile"}
+                  <FaUser className="auth-icon" /> {currentUser.name || "Profile"}
                 </Link>
                 <button onClick={handleLogoutAndClose} className="auth-box logout-btn">
                   <FaSignOutAlt className="auth-icon" /> Logout
@@ -231,17 +231,24 @@ const Navbar = () => {
           </div>
           <div className="sidebar-content">
             <div className="sidebar-section">
-              {isLoggedIn ? (
+              {currentUser ? (
                 <>
-                  <Link to="/dashboard" className="sidebar-item" onClick={handleSidebarItemClick}>
-                    <FaUser className="sidebar-icon" />
-                    <span>Dashboard</span>
-                  </Link>
+                  {currentUser.role === "admin" ? (
+                    <Link to="/admin" className="sidebar-item" onClick={handleSidebarItemClick}>
+                      <FaUser className="sidebar-icon" />
+                      <span>Admin Panel</span>
+                    </Link>
+                  ) : (
+                    <Link to="/dashboard" className="sidebar-item" onClick={handleSidebarItemClick}>
+                      <FaUser className="sidebar-icon" />
+                      <span>Dashboard</span>
+                    </Link>
+                  )}
                   <Link to="/profile" className="sidebar-item" onClick={handleSidebarItemClick}>
                     <FaUser className="sidebar-icon" />
                     <span>My Profile</span>
                   </Link>
-                  <Link to="/my-ads" className="sidebar-item" onClick={handleSidebarItemClick}>
+                  <Link to="/cart" className="sidebar-item" onClick={handleSidebarItemClick}>
                     <FaShoppingCart className="sidebar-icon" />
                     <span>My Cart</span>
                   </Link>
@@ -249,7 +256,6 @@ const Navbar = () => {
                     <FaComments className="sidebar-icon" />
                     <span>My Chats</span>
                   </Link>
-                  
                   <button onClick={handleLogoutAndClose} className="sidebar-item logout-item">
                     <FaSignOutAlt className="sidebar-icon" />
                     <span>Logout</span>
@@ -268,7 +274,7 @@ const Navbar = () => {
                 <FaStore className="sidebar-icon" />
                 <span>Services</span>
               </Link>
-              <Link to="/products/stationary" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/furniture" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Furniture</span>
               </Link>
@@ -276,11 +282,11 @@ const Navbar = () => {
                 <FaStore className="sidebar-icon" />
                 <span>Transport</span>
               </Link>
-              <Link to="/products/furniture" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/electronics" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Electronics</span>
               </Link>
-              <Link to="/products/appliances" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/others" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Others</span>
               </Link>

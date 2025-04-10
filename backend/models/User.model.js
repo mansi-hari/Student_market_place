@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
     rating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
     isVerified: { type: Boolean, default: false },
-    isAdmin: { type: Boolean, default: false },
+    role: { type: String, enum: ['admin', 'seller', 'buyer'], default: 'buyer' }, // Replaced isAdmin with role
     createdAt: { type: Date, default: Date.now },
     location: {
       formatted: { type: String, default: "" },

@@ -1,4 +1,3 @@
-// Dashboard.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -25,28 +24,35 @@ const Dashboard = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
+    console.log("Current User in Dashboard:", currentUser);
+    if (!currentUser) {
+      navigate("/auth/login");
+      return;
+    }
+    if (currentUser.role === "admin") {
+      console.log("Admin detected, redirecting to admin dashboard.");
+      navigate("/admin");
+      return;
+    }
+
     const fetchData = async () => {
-      if (currentUser) {
-        try {
-          setLoading(true);
-          const response = await fetchDashboardData();
-          if (response?.success) {
-            setDashboardData(response.data || {});
-          } else {
-            toast.error(response?.message || "Failed to load dashboard");
-          }
-        } catch (error) {
-          console.error("Error fetching dashboard:", error);
-          toast.error(error.response?.data?.message || "Failed to load dashboard");
-        } finally {
-          setLoading(false);
+      try {
+        setLoading(true);
+        const response = await fetchDashboardData();
+        if (response?.success) {
+          setDashboardData(response.data || {});
+        } else {
+          toast.error(response?.message || "Failed to load dashboard");
         }
-      } else {
+      } catch (error) {
+        console.error("Error fetching dashboard:", error);
+        toast.error(error.response?.data?.message || "Failed to load dashboard");
+      } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [currentUser, fetchDashboardData]);
+  }, [currentUser, fetchDashboardData, navigate]);
 
   const handleMarkAsSold = (productId) => {
     setSelectedProductId(productId);
@@ -222,7 +228,7 @@ const Dashboard = () => {
                     {dashboardData.recentOrders.map((order) => (
                       <tr key={order._id}>
                         <td>{order._id.slice(-6)}</td>
-                        <td>{order.product?.title || 'N/A'}</td>
+                        <td>{order.product?.title || "N/A"}</td>
                         <td>${order.price}</td>
                         <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                       </tr>

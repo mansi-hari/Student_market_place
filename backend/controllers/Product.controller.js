@@ -1,4 +1,3 @@
-// controllers/Product.controller.js
 const Product = require("../models/Product.model");
 const path = require("path");
 const fs = require("fs");
@@ -41,7 +40,6 @@ exports.createProduct = async (req, res) => {
       tags,
       location,
       pincode,
-      
       phoneNumber,
       email,
       negotiable,

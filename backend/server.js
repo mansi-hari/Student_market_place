@@ -21,6 +21,7 @@ const categoryRoutes = require("./routes/categoryRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const locationRoutes = require("./routes/locationRoutes");
 const userRoutes = require("./routes/userRoutes"); // Added userRoutes
+const adminRoutes = require("./routes/adminRoutes"); // Ensure this is included
 const { errorHandler } = require("./middleware/errorMiddleware.js");
 
 // Initialize Express App
@@ -70,7 +71,8 @@ app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/location", locationRoutes);
-app.use("/api/users", userRoutes); // Added userRoutes
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
