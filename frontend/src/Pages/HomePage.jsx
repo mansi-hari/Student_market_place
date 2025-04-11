@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-import { Book, Laptop, Sofa, PenTool, Bike, MoreHorizontal, Heart, MessageCircle } from "lucide-react";
+import { Book, Laptop, Sofa, PenTool, Bike, MoreHorizontal, Heart } from "lucide-react";
 import CategoryCard from "../Components/CategoryCard";
 import HowItWorks from "../Components/HowItWorksCard";
 import "./HomePage.css";
@@ -17,10 +17,8 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [showContactInfo, setShowContactInfo] = useState(false);
-  const [messages, setMessages] = useState([]); // New state for messages
-  const [newMessage, setNewMessage] = useState(""); // New state for typing message
+  const [showModal, setShowModal] = useState(false); // State for modal
+  const [selectedSellerImage, setSelectedSellerImage] = useState(null); // State for selected seller image
 
   const [categories, setCategories] = useState([
     {
@@ -67,7 +65,7 @@ const HomePage = () => {
     },
   ]);
 
-  // Fetch products and messages
+  // Fetch products
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -112,33 +110,10 @@ const HomePage = () => {
       }
     };
 
-    const fetchMessages = async (productId) => {
-      const token = localStorage.getItem("token");
-      if (token && selectedProduct) {
-        try {
-          const response = await axios.get(`http://localhost:5000/api/messages/${productId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (response.data.success) {
-            setMessages(response.data.data);
-          }
-        } catch (error) {
-          console.error("Error fetching messages:", error);
-          toast.error("Failed to load messages");
-        }
-      }
-    };
-
     fetchData();
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
-
-    if (token && selectedProduct) {
-      fetchMessages(selectedProduct._id);
-      const interval = setInterval(() => fetchMessages(selectedProduct._id), 5000); // Poll every 5 seconds
-      return () => clearInterval(interval); // Cleanup
-    }
-  }, [selectedProduct]);
+  }, []);
 
   // Fetch wishlist
   const fetchWishlist = async (token) => {
@@ -194,50 +169,15 @@ const HomePage = () => {
     return wishlist.includes(productId);
   };
 
-  // Handle product click and chat
+  // Navigate to product detail page on click
   const handleProductClick = (product) => {
-    setSelectedProduct(product);
-    setShowContactInfo(true); // Open chat by default
-    setMessages([]); // Reset messages
+    navigate(`/product/${product._id}`); // Redirect to product detail page
   };
 
-  const handleCloseProductModal = () => {
-    setSelectedProduct(null);
-    setShowContactInfo(false);
-    setMessages([]);
-    setNewMessage("");
-  };
-
-  const handleSendMessage = async () => {
-    const token = localStorage.getItem("token");
-    if (!isLoggedIn || !token || !selectedProduct) {
-      toast.error("Please login to send a message");
-      navigate("/auth/login");
-      return;
-    }
-    try {
-      await axios.post(
-        "http://localhost:5000/api/messages",
-        {
-          receiver: selectedProduct.seller._id,
-          product: selectedProduct._id,
-          content: newMessage,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setNewMessage(""); // Clear input
-      toast.success("Message sent!");
-      // Fetch updated messages
-      const response = await axios.get(`http://localhost:5000/api/messages/${selectedProduct._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (response.data.success) {
-        setMessages(response.data.data);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      toast.error("Failed to send message");
-    }
+  // Handle seller image click to open modal
+  const handleSellerImageClick = (image) => {
+    setSelectedSellerImage(image);
+    setShowModal(true);
   };
 
   const StarRating = ({ rating }) => {
@@ -283,7 +223,7 @@ const HomePage = () => {
         <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
             <h2 style={{ fontSize: "24px", fontWeight: "500" }}>Featured Listings</h2>
-            <Link to="/browse" style={{ color: "#1d4ed8", textDecoration: "none" }}>
+            <Link to="/products" style={{ color: "#1d4ed8", textDecoration: "none" }}>
               View all
             </Link>
           </div>
@@ -306,11 +246,11 @@ const HomePage = () => {
                       <div className="no-image-placeholder">No Image</div>
                     )}
                     <button
-                      className={`wishlist-button ${isInWishlist(product._id) ? "active" : ""}`} // Fixed with isInWishlist
+                      className={`wishlist-button ${isInWishlist(product._id) ? "active" : ""}`}
                       onClick={(e) => handleAddToWishlist(product, e)}
-                      aria-label={isInWishlist(product._id) ? "Remove from wishlist" : "Add to wishlist"} // Fixed
+                      aria-label={isInWishlist(product._id) ? "Remove from wishlist" : "Add to wishlist"}
                     >
-                      <Heart size={20} color="#ff4d4d" fill={isInWishlist(product._id) ? "#ff4d4d" : "none"} /> {/* Fixed */}
+                      <Heart size={20} color="#ff4d4d" fill={isInWishlist(product._id) ? "#ff4d4d" : "none"} />
                     </button>
                   </div>
                   <div className="featured-content">
@@ -318,6 +258,29 @@ const HomePage = () => {
                     <p className="featured-price">₹{product.price}</p>
                     <p className="featured-description">{product.description.substring(0, 100)}...</p>
                     <div className="featured-seller">
+                      {product.seller?.profileImage && (
+                        <img
+                          src={
+                            product.seller.profileImage.startsWith("http")
+                              ? product.seller.profileImage
+                              : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+                          }
+                          alt={product.seller.name}
+                          className="seller-avatar"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSellerImageClick(
+                              product.seller.profileImage.startsWith("http")
+                                ? product.seller.profileImage
+                                : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+                            );
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/50?text=No+Image";
+                          }}
+                        />
+                      )}
                       <span className="seller-name">{product.seller?.name || "Anonymous Seller"}</span>
                       <span className="posted-date">{new Date(product.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -331,70 +294,43 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Product Details Modal with Chat */}
-      {selectedProduct && (
-        <div className="modal" onClick={handleCloseProductModal}>
-          <div className="modal-content product-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="close-modal" onClick={handleCloseProductModal}>
-              ×
-            </button>
-            <div className="product-modal-content">
-              {selectedProduct.photos && selectedProduct.photos.length > 0 ? (
-                <img
-                  src={`http://localhost:5000/uploads/${selectedProduct.photos[0]}`}
-                  alt={selectedProduct.title}
-                  className="product-modal-image"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/400";
-                  }}
-                />
-              ) : (
-                <div className="no-image-placeholder product-modal-image">No Image</div>
-              )}
-              <div className="product-modal-details">
-                <h2 className="product-modal-title">{selectedProduct.title}</h2>
-                <p className="product-modal-price">₹{selectedProduct.price}</p>
-                <p className="product-modal-condition">
-                  <strong>Condition:</strong> {selectedProduct.condition}
-                </p>
-                <p className="product-modal-location">
-                  <strong>Location:</strong> {selectedProduct.location}
-                </p>
-                <p className="product-modal-description">{selectedProduct.description}</p>
-
-                <div className="chat-container">
-                  <h3>Chat with {selectedProduct.seller?.name || "Anonymous Seller"}</h3>
-                  <div className="message-list">
-                    {messages.map((msg, index) => (
-                      <div
-                        key={index}
-                        className={`message ${msg.sender._id === (localStorage.getItem("userId") || "").toString() ? "sent" : "received"}`}
-                      >
-                        <p>{msg.content}</p>
-                        <span>{new Date(msg.createdAt).toLocaleTimeString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="message-input">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
-                    />
-                    <button onClick={handleSendMessage}>Send</button>
-                  </div>
-                </div>
-                <button
-                  className={`wishlist-btn ${isInWishlist(selectedProduct._id) ? "active" : ""}`} // Fixed
-                  onClick={(e) => handleAddToWishlist(selectedProduct, e)}
-                >
-                  {isInWishlist(selectedProduct._id) ? "Remove from Wishlist" : "Add to Wishlist"} {/* Fixed */}
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* Seller Image Modal */}
+      {showModal && selectedSellerImage && (
+        <div
+          className="modal"
+          onClick={() => setShowModal(false)}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <img
+            src={selectedSellerImage}
+            alt="Seller Profile"
+            style={{
+              maxWidth: "300px",
+              maxHeight: "300px",
+              objectFit: "cover",
+              border: "2px solid #fff",
+              boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)",
+              borderRadius: "50%",
+              transition: "transform 0.2s",
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://via.placeholder.com/300?text=No+Image";
+              console.log("Modal image error:", e.target.src, e.message);
+              setShowModal(false);
+            }}
+          />
         </div>
       )}
 

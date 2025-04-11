@@ -26,7 +26,7 @@ const colleges = [
 exports.createProduct = async (req, res) => {
   try {
     const userId = req.user.id;
-    console.log("userid in seller page is : ",userId)
+    console.log("userid in seller page is:", userId);
     console.log("Create product request received:", req.body);
     console.log("Files received:", req.files);
 
@@ -61,21 +61,25 @@ exports.createProduct = async (req, res) => {
 
     const photos = req.files ? req.files.map((file) => file.filename) : [];
 
+    // Force category to "Others" if selected, and handle otherCategory separately
+    const finalCategory = category === "Others" ? "Others" : category;
+    const otherCategoryValue = category === "Others" && otherCategory && otherCategory.trim() ? otherCategory : undefined;
+
     const newProduct = await Product.create({
       title,
-      category: category === "Others" ? otherCategory : category,
+      category: finalCategory,
+      otherCategory: otherCategoryValue, // Optional field
       price: Number(price),
       description,
       condition,
-      tags,
+      tags: tags ? tags.split(",").map(tag => tag.trim()) : [],
       photos,
       location,
       pincode,
-      
       phoneNumber,
       email,
       negotiable: negotiable === "true" || negotiable === true,
-      seller: userId
+      seller: userId,
     });
 
     console.log("Saving product:", newProduct);
@@ -129,7 +133,7 @@ exports.getProductsByCategory = async (req, res) => {
     const { category } = req.params;
     console.log(`Fetching products for category: ${category}`);
 
-    const products = await Product.find({ category }).sort({ createdAt: -1 });
+    const products = await Product.find({ category: { $regex: new RegExp(category, 'i') } }).sort({ createdAt: -1 });
     console.log(`Found ${products.length} products in category ${category}`);
 
     res.status(200).json(products);

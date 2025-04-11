@@ -82,7 +82,7 @@ const Navbar = () => {
   };
 
   const handleLogout = async () => {
-    await logout(); 
+    await logout();
     navigate("/"); // Navigate after logout
     setIsSidebarOpen(false);
   };
@@ -171,28 +171,40 @@ const Navbar = () => {
             <FaBars className="menu-icon" />
           </li>
           <li
-            onClick={() => { setMenu("Home"); handleSidebarItemClick(); }}
+            onClick={() => {
+              setMenu("Home");
+              handleSidebarItemClick();
+            }}
             className={menu === "Home" ? "active" : ""}
           >
             <Link to="/">Home</Link>
             {menu === "Home" && <hr />}
           </li>
           <li
-            onClick={() => { setMenu("Browse"); handleSidebarItemClick(); }}
+            onClick={() => {
+              setMenu("Browse");
+              handleSidebarItemClick();
+            }}
             className={menu === "Browse" ? "active" : ""}
           >
             <Link to="/products">Browse Products</Link>
             {menu === "Browse" && <hr />}
           </li>
           <li
-            onClick={() => { setMenu("Sell"); handleSidebarItemClick(); }}
+            onClick={() => {
+              setMenu("Sell");
+              handleSidebarItemClick();
+            }}
             className={menu === "Sell" ? "active" : ""}
           >
             <Link to="/sell">Sell</Link>
             {menu === "Sell" && <hr />}
           </li>
           <li
-            onClick={() => { setMenu("Wishlist"); handleSidebarItemClick(); }}
+            onClick={() => {
+              setMenu("Wishlist");
+              handleSidebarItemClick();
+            }}
             className={menu === "Wishlist" ? "active" : ""}
           >
             <Link to="/wishlist">Wishlist</Link>
@@ -252,10 +264,6 @@ const Navbar = () => {
                     <FaShoppingCart className="sidebar-icon" />
                     <span>My Cart</span>
                   </Link>
-                  <Link to="/messages" className="sidebar-item" onClick={handleSidebarItemClick}>
-                    <FaComments className="sidebar-icon" />
-                    <span>My Chats</span>
-                  </Link>
                   <button onClick={handleLogoutAndClose} className="sidebar-item logout-item">
                     <FaSignOutAlt className="sidebar-icon" />
                     <span>Logout</span>
@@ -270,23 +278,27 @@ const Navbar = () => {
             </div>
             <div className="sidebar-section">
               <h4>Categories</h4>
-              <Link to="/products/services" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/category/Supplies" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
-                <span>Services</span>
+                <span>Supplies</span>
               </Link>
-              <Link to="/products/furniture" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/category/Furniture" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Furniture</span>
               </Link>
-              <Link to="/products/bikes" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/category/Books" className="sidebar-item" onClick={handleSidebarItemClick}>
+                <FaStore className="sidebar-icon" />
+                <span>Books</span>
+              </Link>
+              <Link to="/products/category/Transport" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Transport</span>
               </Link>
-              <Link to="/products/electronics" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/category/Electronics" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Electronics</span>
               </Link>
-              <Link to="/products/others" className="sidebar-item" onClick={handleSidebarItemClick}>
+              <Link to="/products/category/Others" className="sidebar-item" onClick={handleSidebarItemClick}>
                 <FaStore className="sidebar-icon" />
                 <span>Others</span>
               </Link>

@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useEffect } from 'react';
-import { initializeSocket } from './utils/socket';
+
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './Context/AuthContext';
@@ -20,7 +20,7 @@ import ProductDetail from './Pages/ProductDetail';
 import Dashboard from './Pages/Dashboard';
 import AdminPanel from './Pages/AdminPanel';
 import Footer from './Components/Footer/Footer';
-import ChatPage from './Pages/ChatPage';
+
 import './App.css';
 import Profile from './Pages/Profile';
 import Cart from './Pages/Cart';
@@ -28,12 +28,7 @@ import Cart from './Pages/Cart';
 function App() {
   const token = localStorage.getItem('token');
 
-  useEffect(() => {
-    if (token) {
-      initializeSocket(token);
-    }
-  }, [token]);
-
+ 
   return (
     <AuthProvider>
       <MarketplaceProvider>
@@ -58,7 +53,7 @@ const AppContent = () => {
     { Path: "/browse/:category", Component: "Browse" },
     { Path: "/products/category/:categoryName", Component: "CategoryPage" },
     { Path: "/product/:productId", Component: "ProductDetail" },
-    { Path: "/chat/:sellerId", Component: "ChatPage" },
+    
     { Path: "/auth/login", Component: "Login" },
     { Path: "/auth/signup", Component: "Signup" },
     { Path: "/sell", Component: "SellPage (Protected)" },
@@ -94,7 +89,7 @@ const AppContent = () => {
         <Route path="/browse/:category" element={<Browse />} />
         <Route path="/products/category/:categoryName" element={<CategoryPage />} />
         <Route path="/product/:productId" element={<ProductDetail />} />
-        <Route path="/chat/:sellerId" element={<ChatPage />} />
+        
         <Route path="/auth/login" element={<Login isSignup={false} />} />
         <Route path="/auth/signup" element={<Signup isSignup={true} />} />
         

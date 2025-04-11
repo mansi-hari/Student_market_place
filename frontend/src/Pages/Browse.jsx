@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
-import { Heart, Grid, List, MapPin, X, ShoppingCart } from "lucide-react";
+import { Heart, Grid, List, MapPin, ShoppingCart } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../Context/AuthContext";
@@ -14,7 +14,6 @@ const Browse = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState([]);
   const [cart, setCart] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [sortOption, setSortOption] = useState("newest");
   const [displayProducts, setDisplayProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -39,7 +38,7 @@ const Browse = () => {
     "Furniture",
     "Books",
     "Transport",
-    "Services",
+    "Supplies",
     "Others",
   ];
 
@@ -78,6 +77,7 @@ const Browse = () => {
       }
 
       const response = await axios.get(url);
+      console.log("API Response:", response.data); // Debug log
       if (Array.isArray(response.data)) {
         setAllProducts(response.data);
         setCategoryTitle(category ? category : "All Products");
@@ -87,6 +87,7 @@ const Browse = () => {
 
       setLoading(false);
     } catch (err) {
+      console.error("Fetch error:", err);
       setError("Failed to load products");
       setLoading(false);
       toast.error("Failed to load products");
@@ -117,7 +118,7 @@ const Browse = () => {
 
     if (selectedCategory && selectedCategory !== "All Categories") {
       filteredProducts = filteredProducts.filter(
-        (product) => product.category === selectedCategory
+        (product) => product.category.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
@@ -245,22 +246,12 @@ const Browse = () => {
     }
   };
 
-  const handleImageClick = (product) => {
-    setSelectedProduct(product);
-  };
-
-  const closeOptions = () => {
-    setSelectedProduct(null);
-  };
-
   const handleContactSeller = () => {
     if (!isLoggedIn) {
       toast.error("Please login to contact the seller");
       navigate("/auth/login");
       return;
     }
-
-    navigate(`/chat/${selectedProduct.seller._id}`);
   };
 
   const isInFavorites = (productId) => {
@@ -441,7 +432,7 @@ const Browse = () => {
           {currentProducts.length > 0 ? (
             currentProducts.map((product) => (
               <div key={product._id} className="product-card">
-                <div className="product-image" onClick={() => handleImageClick(product)}>
+                <div className="product-image" onClick={() => navigate(`/product/${product._id}`)}>
                   {product.photos && product.photos.length > 0 ? (
                     <img
                       src={`http://localhost:5000/uploads/${product.photos[0]}`}
@@ -496,7 +487,7 @@ const Browse = () => {
             ))
           ) : (
             <div className="no-products">
-              <p>No products found. Try adjusting your filters or search term.</p>
+              <p>No products found. Try adjusting your filters or search term. Check console for details.</p>
               <Link to="/sell" className="btn btn-primary mt-3">
                 List an Item
               </Link>
@@ -532,62 +523,6 @@ const Browse = () => {
           </div>
         )}
       </main>
-
-      {selectedProduct && (
-        <div className="product-options-modal">
-          <div className="modal-content">
-            <button className="close-btn" onClick={closeOptions}>
-              <X size={24} />
-            </button>
-            <div className="modal-product-image">
-              {selectedProduct.photos && selectedProduct.photos.length > 0 ? (
-                <img
-                  src={`http://localhost:5000/uploads/${selectedProduct.photos[0]}`}
-                  alt={selectedProduct.title}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/400";
-                  }}
-                />
-              ) : (
-                <div className="no-image-placeholder">No Image</div>
-              )}
-            </div>
-            <div className="modal-product-details">
-              <h2>{selectedProduct.title}</h2>
-              <p className="modal-product-price">₹{selectedProduct.price}</p>
-              <p className="modal-product-condition">
-                <strong>Condition:</strong> {selectedProduct.condition}
-              </p>
-              <p className="modal-product-location">
-                <MapPin size={16} /> {selectedProduct.location}
-              </p>
-              <p className="modal-product-description">{selectedProduct.description}</p>
-              <div className="modal-actions">
-                <Link to={`/product/${selectedProduct._id}`} className="btn btn-primary full-details-btn">
-                  Full Details
-                </Link>
-                <button
-                  className={`btn btn-success add-to-cart-btn ${isInCart(selectedProduct._id) ? "disabled" : ""}`}
-                  onClick={(e) => handleAddToCart(selectedProduct, e)}
-                  disabled={isInCart(selectedProduct._id)}
-                >
-                  <ShoppingCart size={16} /> {isInCart(selectedProduct._id) ? "In Cart" : "Add to Cart"}
-                </button>
-                <button className="contact-seller" onClick={handleContactSeller}>
-                  Contact Seller
-                </button>
-                <button
-                  className={`add-to-favorites ${isInFavorites(selectedProduct._id) ? "active" : ""}`}
-                  onClick={(e) => toggleFavorite(selectedProduct, e)}
-                >
-                  {isInFavorites(selectedProduct._id) ? "Remove from Favorites" : "Add to Favorites"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

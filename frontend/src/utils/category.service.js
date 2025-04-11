@@ -17,9 +17,9 @@ export const getCategories = async () => {
       { name: "Furniture" },
       { name: "Appliances" },
       { name: "Bicycles" },
-      { name: "Clothing" },
+      { name: "Transport" },
       { name: "Sports & Fitness" },
-      { name: "Musical Instruments" },
+      { name: "Services" },
       { name: "Stationery" },
     ]
   }

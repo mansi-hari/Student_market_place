@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../Context/AuthContext"; // Import useAuth
-import { initializeSocket } from "../utils/socket";
+
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -28,8 +28,7 @@ const Login = () => {
         const token = response.token; // Directly access token from response
         const user = response.user; // Directly access user from response
 
-        // Initialize socket connection
-        initializeSocket(token);
+       
 
         toast.success("Login successful!");
         // Let App.js handle redirect based on currentUser
