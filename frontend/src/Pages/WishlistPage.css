@@ -1,11 +1,17 @@
 .wishlist-page {
   min-height: 70vh;
+  background-color: #f9fafb; /* Light background to match the theme */
+  padding: 20px;
 }
 
 .wishlist-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border-radius: 8px;
+  background-color: white;
+  border-radius: 12px; /* Increased radius for rounded look */
   overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+  position: relative;
 }
 
 .wishlist-card:hover {
@@ -37,37 +43,49 @@
   cursor: pointer;
 }
 
+
 .remove-wishlist-btn {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
+  background: none;
   border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  padding: 4px;
+  cursor: pointer;
+  color: #ef4444; 
+  transition: transform 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  border-radius: 50%; 
+  width: 30px;
+  height: 30px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.remove-wishlist-btn:hover {
-  background-color: rgba(255, 77, 77, 0.2);
+.remove-wishlist-btn:hover,
+.remove-wishlist-btn.active {
+  transform: scale(1.2); 
 }
 
+.remove-wishlist-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Card Content Styling */
 .card-title {
   font-weight: 600;
-  margin-bottom: 8px;
+  margin: 15px 0 8px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #1f2937; /* Darker text for readability */
 }
 
 .price {
   font-weight: 700;
-  color: #0d6efd;
+  color: #10b981; /* Green color to match price in image */
   font-size: 1.1rem;
   margin-bottom: 8px;
 }
@@ -75,6 +93,8 @@
 .condition,
 .location {
   margin-bottom: 4px;
+  color: #6b7280; /* Gray color for secondary text */
+  font-size: 14px;
 }
 
 .empty-wishlist {
@@ -82,11 +102,13 @@
   background-color: #f8f9fa;
   border-radius: 8px;
   margin: 20px 0;
+  text-align: center;
 }
 
 .empty-wishlist h3 {
   margin-bottom: 10px;
   font-weight: 600;
+  color: #1f2937;
 }
 
 .empty-wishlist p {
@@ -94,5 +116,30 @@
   max-width: 400px;
   margin-left: auto;
   margin-right: auto;
+  color: #6b7280;
 }
 
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wishlist-card {
+    width: 100%;
+  }
+
+  .wishlist-image-container {
+    height: 150px; /* Reduced height for smaller screens */
+  }
+}
+
+@media (max-width: 480px) {
+  .wishlist-image-container {
+    height: 120px; /* Further reduced for very small screens */
+  }
+
+  .card-title {
+    font-size: 14px;
+  }
+
+  .price {
+    font-size: 1rem;
+  }
+}

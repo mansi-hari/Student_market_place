@@ -1,67 +1,47 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import logo from '../Assets/logo.png';
+import React from "react";
+import { Link } from "react-router-dom";
+import { FaHome, FaShoppingBag, FaUserPlus, FaEnvelope, FaMapMarker } from "react-icons/fa";
+import "./Footer.css";
 
 const Footer = () => {
   return (
-    <footer className="bg-dark text-light py-5">
-      <div className="container">
-        <div className="row g-4">
-          {/* Logo and Description */}
-          <div className="col-md-3">
-            <Link to="/" className="d-flex align-items-center text-decoration-none text-light">
-              <img src={logo || "/placeholder.svg"} alt="Student Marketplace" className="me-2" style={{ height: '40px' }} />
-              <span className="fs-5 fw-bold">StudentMarket</span>
-            </Link>
-            <p className="mt-3 text-secondary">
-              The ultimate platform for students to buy and sell items within their campus community.
-            </p>
-            <div className="d-flex gap-3 mt-3">
-              <a href="#" className="text-secondary fs-4"><i className="bi bi-facebook"></i></a>
-              <a href="#" className="text-secondary fs-4"><i className="bi bi-instagram"></i></a>
-              <a href="#" className="text-secondary fs-4"><i className="bi bi-twitter"></i></a>
-            </div>
-          </div>
-
-          {/* Categories */}
-          <div className="col-md-3">
-            <h5 className="text-uppercase fw-bold">Categories</h5>
-            <ul className="list-unstyled mt-3">
-              {['Textbooks', 'Electronics', 'Furniture', 'Transport', 'Services'].map(category => (
-                <li key={category} className="mb-2">
-                  <Link to={`/category/${category}`} className="text-secondary text-decoration-none">{category}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Quick Links */}
-          <div className="col-md-3">
-            <h5 className="text-uppercase fw-bold">Quick Links</h5>
-            <ul className="list-unstyled mt-3">
-              {['Sell an Item', 'My Wishlist', 'Categories', 'My Profile', 'My Cart'].map(link => (
-                <li key={link} className="mb-2">
-                  <Link to={`/${link.toLowerCase().replace(/ /g, '-')}`} className="text-secondary text-decoration-none">{link}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support */}
-          <div className="col-md-3">
-            <h5 className="text-uppercase fw-bold">Support</h5>
-            <ul className="list-unstyled mt-3">
-              {['Help Center', 'Safety Tips', 'Terms of Service', 'Privacy Policy', 'Contact Us'].map(support => (
-                <li key={support} className="mb-2">
-                  <Link to={`/${support.toLowerCase().replace(/ /g, '-')}`} className="text-secondary text-decoration-none">{support}</Link>
-                </li>
-              ))}
-            </ul>
+    <footer className="footer-good">
+      <div className="footer-good-container">
+        <div className="footer-good-brand">
+          <h3>Student Marketplace</h3>
+          <p>Your one-stop shop for campus essentials.</p>
+          <div className="footer-good-social">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+              <FaHome />
+            </a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+              <FaShoppingBag />
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+              <FaUserPlus />
+            </a>
           </div>
         </div>
 
-        <hr className="border-secondary mt-5" />
-        <p className="text-center text-secondary mt-3">&copy; {new Date().getFullYear()} Student Marketplace. All rights reserved.</p>
+        <div className="footer-good-links">
+          <h4>Quick Access</h4>
+          <ul>
+            <li><Link to="/"><FaHome /> Home</Link></li>
+            <li><Link to="/products"><FaShoppingBag /> Products</Link></li>
+            <li><Link to="/sell"><FaUserPlus /> Sell Item</Link></li>
+            <li><Link to="/wishlist"><FaShoppingBag /> Wishlist</Link></li>
+          </ul>
+        </div>
+
+        <div className="footer-good-contact">
+          <h4>Get in Touch</h4>
+          <p><FaEnvelope /> help@studentmarketplace.com</p>
+          <p><FaMapMarker /> Mohan Nagar, Ghaziabad, India</p>
+        </div>
+      </div>
+
+      <div className="footer-good-bottom">
+        <p>© {new Date().getFullYear()} Student Marketplace | Built for Students, by Students</p>
       </div>
     </footer>
   );

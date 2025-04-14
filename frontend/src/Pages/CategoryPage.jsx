@@ -1,9 +1,10 @@
+"use client"
 
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import axios from "axios"
 import { toast } from "react-hot-toast"
-import { Heart } from "lucide-react"
+import { Heart } from 'lucide-react'
 
 const CategoryPage = () => {
   const { categoryName } = useParams()
@@ -150,4 +151,3 @@ const CategoryPage = () => {
 }
 
 export default CategoryPage
-

@@ -27,6 +27,11 @@ const ProductDetail = () => {
   const [showModal, setShowModal] = useState(false);
   const [showContactInfo, setShowContactInfo] = useState(false); // Changed to showContactInfo
 
+  // Auth state from localStorage (simulating useAuth context)
+  const token = localStorage.getItem("token");
+  const isLoggedIn = !!token;
+  const currentUserId = token ? JSON.parse(atob(token.split('.')[1])).id : null; // Extract userId from token (example)
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -136,6 +141,38 @@ const ProductDetail = () => {
     }
     console.log("Contact Seller Data:", product.seller);
     setShowContactInfo(!showContactInfo); // Toggle contact info visibility
+  };
+
+  const handleIntent = async (product) => {
+    if (!isLoggedIn) {
+      toast.error("Please login to register intent");
+      navigate("/auth/login");
+      return;
+    }
+
+    if (product.intentBy || product.seller.toString() === currentUserId) {
+      toast.info("You cannot register intent as the seller or intent is already taken");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `http://localhost:5000/api/products/${product._id}/intent`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (response.data.success) {
+        toast.success("Intent registered successfully!");
+        setProduct({ ...product, intentBy: currentUserId }); // Update local state
+      } else {
+        toast.error(response.data.message || "Failed to register intent");
+      }
+    } catch (error) {
+      console.error("Intent error:", error.response ? error.response.data : error.message);
+      toast.error(`Failed to register intent: ${error.response ? error.response.data.message : error.message}`);
+    }
   };
 
   if (loading) return (
@@ -258,6 +295,13 @@ const ProductDetail = () => {
             >
               <FaShoppingCart className="me-2" />
               {cart.some((item) => item._id === product._id) ? "In Cart" : "Add to Cart"}
+            </button>
+            <button
+              className={`btn btn-info btn-lg intent-btn ${product.intentBy || product.seller.toString() === currentUserId ? "disabled" : ""}`}
+              onClick={() => handleIntent(product)}
+              disabled={!isLoggedIn || product.intentBy || product.seller.toString() === currentUserId}
+            >
+              Intent to Buy
             </button>
             <button className="btn btn-outline-secondary share-btn" onClick={handleShare}>
               <FaShare />
