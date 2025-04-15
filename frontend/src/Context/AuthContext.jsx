@@ -34,7 +34,8 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = response.data.data || response.data.user || response.data;
-      console.log("API Response (getCurrentUser) with role:", userData);
+      const updatedUserData = { ...userData, token };
+      console.log("API Response (getCurrentUser) with role:", updatedUserData);
       return userData;
     } catch (err) {
       console.error("Get current user error (attempt", retryCount + 1, "):", {
@@ -92,11 +93,10 @@ export const AuthProvider = ({ children }) => {
       if (freshUserData) {
         setUserAndLocalStorage(freshUserData);
       }
-      // Redirect based on role
       if (freshUserData?.role === "admin") {
         window.location.href = "/admin";
       } else if (freshUserData?.role === "buyer" || freshUserData?.role === "seller") {
-        window.location.href = "/dashboard"; // Use Dashboard.jsx for non-admin
+        window.location.href = "/dashboard";
       }
       return response.data;
     } catch (err) {
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   const signupUser = async (userData) => {
     try {
       setError(null);
-      const response = await axios.post("http://localhost:5000/api/auth/register", userData); // Changed to register
+      const response = await axios.post("http://localhost:5000/api/auth/register", userData);
       const user = response.data.data?.user || response.data.user;
       setUserAndLocalStorage(user);
       const freshUserData = await getCurrentUser();
@@ -145,15 +145,12 @@ export const AuthProvider = ({ children }) => {
 
   const registerIntent = async (productId) => {
     try {
-      const response = await fetch(`/api/products/${productId}/intent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      const data = await response.json();
-      return data;
+      const response = await axios.post(
+        `http://localhost:5000/api/products/${productId}/intent`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+      return response.data;
     } catch (err) {
       console.error("Intent registration error:", err);
       throw err;
@@ -170,8 +167,10 @@ export const AuthProvider = ({ children }) => {
         signup: signupUser,
         logout: logoutUser,
         isAuthenticated: !!currentUser,
+        getCurrentUser,
         fetchDashboardData,
         registerIntent,
+        token: currentUser?.token || localStorage.getItem("token"), // Expose token
       }}
     >
       {children}

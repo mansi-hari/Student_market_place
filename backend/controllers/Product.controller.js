@@ -65,16 +65,26 @@ exports.createProduct = async (req, res) => {
     const finalCategory = category === "Others" ? "Others" : category;
     const otherCategoryValue = category === "Others" && otherCategory && otherCategory.trim() ? otherCategory : undefined;
 
+    // Prioritize sellerUniversity, use input location only if it matches a college and sellerUniversity is absent
+    const collegeNames = colleges.map((c) => c.name.toLowerCase());
+    const locationToUse = req.user.sellerUniversity
+      ? req.user.sellerUniversity
+      : location && collegeNames.includes(location.toLowerCase())
+      ? location
+      : "Mohan Nagar, Ghaziabad"; // Default fallback
+
+    console.log("Using location:", locationToUse); // Debug the final location
+
     const newProduct = await Product.create({
       title,
       category: finalCategory,
-      otherCategory: otherCategoryValue, // Optional field
+      otherCategory: otherCategoryValue,
       price: Number(price),
       description,
       condition,
-      tags: tags ? tags.split(",").map(tag => tag.trim()) : [],
+      tags: tags ? tags.split(",").map((tag) => tag.trim()) : [],
       photos,
-      location,
+      location: locationToUse, // Use validated location
       pincode,
       phoneNumber,
       email,

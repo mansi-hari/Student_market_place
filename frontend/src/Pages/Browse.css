@@ -179,7 +179,7 @@
   right: 10px;
   background-color: white;
   border: none;
-  border-radius: 50%;
+  border-radius: 50%; /* Ensures circular shape */
   width: 32px;
   height: 32px;
   display: flex;
@@ -187,17 +187,34 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  color: #6b7280;
-  transition: color 0.2s ease;
-}
-
-.favorite-btn.active {
-  color: #ef4444;
+  padding: 0; 
+  overflow: hidden; 
 }
 
 .favorite-btn svg {
-  width: 20px;
+  width: 20px; 
   height: 20px;
+  stroke: #ef4444; 
+  stroke-width: 1.5; 
+  transition: fill 0.2s ease; 
+}
+
+/* Inactive state (default) */
+.favorite-btn {
+  color: #ffffff; /* White fill for inactive state */
+}
+
+.favorite-btn svg {
+  fill: #ffffff; /* White fill for inactive state */
+}
+
+/* Active state */
+.favorite-btn.active {
+  background-color: #fef2f2; 
+}
+
+.favorite-btn.active svg {
+  fill: #ef4444; 
 }
 
 .product-info {

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "../Context/AuthContext";
 import "./SellPage.css";
 
 const SellPage = () => {
+  const { currentUser, getCurrentUser } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -16,7 +18,6 @@ const SellPage = () => {
     condition: "New",
     tags: "",
     photos: null,
-    location: "",
     pincode: "",
     phoneNumber: "",
     email: "",
@@ -25,6 +26,26 @@ const SellPage = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImages, setPreviewImages] = useState([]);
+  const [sellerCollege, setSellerCollege] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (currentUser) {
+        try {
+          const userData = await getCurrentUser();
+          // Use sellerUniversity from the user profile
+          setSellerCollege(userData?.sellerUniversity || "");
+          if (!sellerCollege) {
+            toast.warn("Please update your profile with a college!");
+          }
+        } catch (error) {
+          console.error("Failed to fetch user profile:", error);
+          toast.error("Failed to load profile data.");
+        }
+      }
+    };
+    fetchProfile();
+  }, [currentUser, getCurrentUser]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -37,7 +58,6 @@ const SellPage = () => {
   const handleFileChange = (e) => {
     const filesArray = Array.from(e.target.files);
 
-    // Limit to 5 images
     if (filesArray.length > 5) {
       toast.error("You may upload a maximum of 5 photos.");
       return;
@@ -48,10 +68,7 @@ const SellPage = () => {
       photos: filesArray,
     }));
 
-    // Generate preview URLs
     const newPreviews = filesArray.map((file) => URL.createObjectURL(file));
-
-    // Revoke old preview URLs to avoid memory leaks
     previewImages.forEach((url) => URL.revokeObjectURL(url));
     setPreviewImages(newPreviews);
   };
@@ -59,14 +76,13 @@ const SellPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (Number.parseFloat(formData.price) <= 0 || isNaN(formData.price)) {
       toast.error("Price must be a positive number.");
       return;
     }
 
-    if (!formData.location.trim()) {
-      toast.error("Location is required.");
+    if (!sellerCollege) {
+      toast.error("Please update your profile with a college first!");
       return;
     }
 
@@ -80,19 +96,16 @@ const SellPage = () => {
       return;
     }
 
-    // Validate phone number format if provided
     if (formData.phoneNumber && !/^\d{10}$/.test(formData.phoneNumber)) {
       toast.error("Please enter a valid 10-digit phone number.");
       return;
     }
 
-    // Validate email format if provided
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       toast.error("Please enter a valid email address.");
       return;
     }
 
-    // Require at least one contact method
     if (!formData.phoneNumber && !formData.email) {
       toast.error("Please provide at least one contact method (phone number or email).");
       return;
@@ -100,37 +113,30 @@ const SellPage = () => {
 
     setIsSubmitting(true);
 
-    // Create FormData object for file upload
     const formDataToSend = new FormData();
-
-    // Add text fields
     Object.keys(formData).forEach((key) => {
       if (key !== "photos") {
         formDataToSend.append(key, formData[key]);
       }
     });
-
-    // Add photos
     if (formData.photos) {
       formData.photos.forEach((file) => {
         formDataToSend.append("photos", file);
       });
     }
+    formDataToSend.append("location", sellerCollege); // Force location to seller's college
 
     try {
-      console.log("Submitting form data...", Object.fromEntries(formDataToSend)); // Debug log
+      console.log("Submitting form data...", Object.fromEntries(formDataToSend));
       const response = await axios.post("http://localhost:5000/api/products", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`, // Ensure token is present
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
-      console.log("Response:", response.data);
-
       if (response.data.success) {
         toast.success("Item listed successfully!");
-        // Reset form
         setFormData({
           title: "",
           category: "",
@@ -140,13 +146,11 @@ const SellPage = () => {
           condition: "New",
           tags: "",
           photos: null,
-          location: "",
           pincode: "",
           phoneNumber: "",
           email: "",
           negotiable: false,
         });
-        // Clear preview images
         previewImages.forEach((url) => URL.revokeObjectURL(url));
         setPreviewImages([]);
       } else {
@@ -154,7 +158,7 @@ const SellPage = () => {
       }
     } catch (error) {
       console.error("Error listing item:", error.response ? error.response.data : error.message);
-      toast.error(error.response?.data?.message || "A server error occurred. Please try again later.");
+      toast.error(error.response?.data?.message || "A server error occurred.");
     } finally {
       setIsSubmitting(false);
     }
@@ -365,19 +369,6 @@ const SellPage = () => {
           <div className="card-body">
             <div className="row mb-3">
               <div className="col-md-6 form-group">
-                <label htmlFor="location" className="form-label">City/Area</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="col-md-6 form-group">
                 <label htmlFor="pincode" className="form-label">Pincode</label>
                 <input
                   type="text"
@@ -388,6 +379,16 @@ const SellPage = () => {
                   onChange={handleChange}
                   required
                 />
+              </div>
+              <div className="col-md-6 form-group">
+                <label className="form-label">College Location</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={sellerCollege || "Loading..."}
+                  readOnly
+                />
+                <small className="text-muted">This is set from your profile.</small>
               </div>
             </div>
           </div>

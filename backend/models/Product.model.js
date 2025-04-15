@@ -18,6 +18,7 @@ const ProductSchema = new mongoose.Schema(
     isSold: { type: Boolean, default: false },
     intentBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // Buyer who showed intent
     buyer: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // Buyer after sale
+    collegeLocation: { type: String }, // New field for seller's college
   },
   { timestamps: true }
 );

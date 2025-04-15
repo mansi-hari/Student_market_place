@@ -4,16 +4,17 @@ import { Heart, Grid, List, MapPin, ShoppingCart } from "lucide-react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../Context/AuthContext";
+import { colleges } from "../utils/colleges";
 import "./Browse.css";
 
 const Browse = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { category } = useParams();
-  const { registerIntent, currentUser } = useAuth();
+  const { currentUser, token } = useAuth(); // Using token from AuthContext
   const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState([]); // Will be synced with server
   const [sortOption, setSortOption] = useState("newest");
   const [displayProducts, setDisplayProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
@@ -28,7 +29,8 @@ const Browse = () => {
     Good: false,
     Used: false,
   });
-  const [selectedCategory, setSelectedCategory] = useState(category || "");
+  const [selectedCategory, setSelectedCategory] = useState(category || "All Categories");
+  const [selectedLocation, setSelectedLocation] = useState("Select University");
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(6);
 
@@ -43,23 +45,43 @@ const Browse = () => {
   ];
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
+    const storedToken = localStorage.getItem("token"); // Get token from localStorage
+    const authToken = token || storedToken; // Prefer AuthContext token, fallback to localStorage
+    setIsLoggedIn(!!authToken);
 
     const savedFavorites = JSON.parse(localStorage.getItem("wishlist") || "[]");
     setFavorites(savedFavorites);
 
-    const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
-    setCart(savedCart);
+    // Fetch cart from server
+    const fetchCart = async () => {
+      if (authToken && currentUser?._id) {
+        try {
+          const response = await axios.get(`http://localhost:5000/api/cart`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          if (response.data.success) {
+            setCart(response.data.cart || []);
+            console.log("Fetched cart for user:", currentUser._id, response.data.cart);
+          } else {
+            setCart([]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch cart:", error.response ? error.response.data : error.message);
+          setCart([]);
+          toast.error("Failed to load cart");
+        }
+      } else {
+        setCart([]);
+      }
+    };
+    fetchCart();
 
     fetchProducts();
-  }, [category]);
+  }, [token, currentUser?._id, location.search]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      let url = "http://localhost:5000/api/products";
-
       const urlParams = new URLSearchParams(location.search);
       const search = urlParams.get("search") || "";
       const college = urlParams.get("college") || "";
@@ -68,19 +90,21 @@ const Browse = () => {
       if (search) queryParams.set("search", search);
       if (college) queryParams.set("college", college);
 
-      if (category) {
-        url = `http://localhost:5000/api/products/category/${category}`;
-      }
+      let url = category
+        ? `http://localhost:5000/api/products/category/${category}`
+        : `http://localhost:5000/api/products`;
 
-      if (queryParams.toString()) {
-        url += `?${queryParams.toString()}`;
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
       }
 
       const response = await axios.get(url);
-      console.log("API Response:", response.data); // Debug log
+      console.log("Fetched products with locations:", response.data.map((p) => ({ _id: p._id, location: p.location })));
+
       if (Array.isArray(response.data)) {
         setAllProducts(response.data);
-        setCategoryTitle(category ? category : "All Products");
+        setCategoryTitle(category || "All Products");
       } else {
         setError("Invalid data format received from server");
       }
@@ -94,74 +118,113 @@ const Browse = () => {
     }
   };
 
-  const applyFilters = (products = allProducts) => {
-    let filteredProducts = [...products];
+  const getCollegeFromLocation = (location) => {
+    if (!location) return "";
+    const lowerLocation = location.toLowerCase().trim();
+    console.log("Checking location:", lowerLocation);
+    for (let college of colleges) {
+      if (college === "Select University") continue;
+      const collegeName = college.toLowerCase().replace(/\s+/g, " ");
+      console.log("Comparing with college:", collegeName);
+      if (lowerLocation === collegeName || lowerLocation.includes(collegeName)) {
+        console.log("Exact match found:", college);
+        return college;
+      }
+      const keywords = collegeName.split(" ").filter(word => ["college", "institute", "academy"].includes(word) || word.length > 4);
+      console.log("Keywords for", collegeName, ":", keywords);
+      const matchedKeyword = keywords.find(keyword => lowerLocation.includes(keyword));
+      if (matchedKeyword) {
+        console.log("Keyword match found for", college, "with keyword:", matchedKeyword);
+        return college;
+      }
+    }
+    console.log("No match found for location:", lowerLocation);
+    return "";
+  };
+
+  const applyFilters = () => {
+    let filteredProducts = [...allProducts];
 
     const urlParams = new URLSearchParams(location.search);
     const searchTerm = urlParams.get("search")?.toLowerCase() || "";
-    const locationFilter = urlParams.get("college")?.toLowerCase() || "";
-
     if (searchTerm) {
-      filteredProducts = filteredProducts.filter(
-        (product) =>
-          product.title?.toLowerCase().includes(searchTerm) ||
-          product.description?.toLowerCase().includes(searchTerm) ||
-          product.category?.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    if (locationFilter) {
-      filteredProducts = filteredProducts.filter(
-        (product) => product.location && product.location.toLowerCase().includes(locationFilter)
+      filteredProducts = filteredProducts.filter((product) =>
+        [product.title?.toLowerCase(), product.description?.toLowerCase(), product.category?.toLowerCase()]
+          .some((field) => field?.includes(searchTerm))
       );
     }
 
     if (selectedCategory && selectedCategory !== "All Categories") {
       filteredProducts = filteredProducts.filter(
-        (product) => product.category.toLowerCase() === selectedCategory.toLowerCase()
+        (product) => product.category?.toLowerCase() === selectedCategory.toLowerCase()
       );
+      console.log(`Filtered by category ${selectedCategory}:`, filteredProducts.length);
     }
 
-    if (priceRange.min !== "") {
-      filteredProducts = filteredProducts.filter((product) => product.price >= Number(priceRange.min));
+    if (selectedLocation && selectedLocation !== "Select University") {
+      filteredProducts = filteredProducts.filter((product) => {
+        const productLocation = (product.location || "").toLowerCase().trim();
+        const selected = selectedLocation.toLowerCase();
+        const collegeFromLocation = getCollegeFromLocation(product.location);
+        console.log(`Checking product ${product._id}: location=${productLocation}, selected=${selected}, collegeMatch=${collegeFromLocation}`);
+        return collegeFromLocation.toLowerCase() === selected;
+      });
+      console.log(`Filtered by location ${selectedLocation}:`, filteredProducts.length);
     }
-    if (priceRange.max !== "") {
-      filteredProducts = filteredProducts.filter((product) => product.price <= Number(priceRange.max));
+
+    if (priceRange.min) {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.price >= Number(priceRange.min)
+      );
+    }
+    if (priceRange.max) {
+      filteredProducts = filteredProducts.filter(
+        (product) => product.price <= Number(priceRange.max)
+      );
     }
 
     const selectedConditionsList = Object.keys(selectedConditions).filter(
       (condition) => selectedConditions[condition]
     );
     if (selectedConditionsList.length > 0) {
-      filteredProducts = filteredProducts.filter((product) =>
-        selectedConditionsList.includes(product.condition)
+      filteredProducts = filteredProducts.filter(
+        (product) => product.condition && selectedConditionsList.includes(product.condition)
       );
     }
 
-    switch (sortOption) {
-      case "price-low":
-        filteredProducts.sort((a, b) => a.price - b.price);
-        break;
-      case "price-high":
-        filteredProducts.sort((a, b) => b.price - a.price);
-        break;
-      case "newest":
-      default:
-        filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (sortOption === "price-low") {
+      filteredProducts.sort((a, b) => a.price - b.price);
+    } else if (sortOption === "price-high") {
+      filteredProducts.sort((a, b) => b.price - a.price);
+    } else {
+      filteredProducts.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
     }
 
     setDisplayProducts(filteredProducts);
   };
 
+  const handleCategoryChange = (e) => {
+    const value = e.target.value;
+    console.log("Category changed to:", value);
+    setSelectedCategory(value);
+  };
+
+  const handleLocationChange = (e) => {
+    const value = e.target.value;
+    console.log("Location changed to:", value);
+    setSelectedLocation(value);
+  };
+
   const handlePriceChange = (e) => {
     const { name, value } = e.target;
-    setPriceRange((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    console.log(`Price ${name} changed to:`, value);
+    setPriceRange((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleConditionChange = (condition) => {
+    console.log("Condition toggled:", condition);
     setSelectedConditions((prev) => ({
       ...prev,
       [condition]: !prev[condition],
@@ -169,33 +232,39 @@ const Browse = () => {
   };
 
   useEffect(() => {
-    applyFilters();
-    setCurrentPage(1);
-  }, [location.search, allProducts, selectedCategory, priceRange, selectedConditions, sortOption]);
+    if (allProducts.length > 0) {
+      console.log("Triggering applyFilters");
+      applyFilters();
+    }
+  }, [
+    allProducts,
+    selectedCategory,
+    selectedLocation,
+    priceRange,
+    selectedConditions,
+    sortOption,
+    location.search,
+  ]);
 
   const toggleFavorite = async (product, e) => {
     e.stopPropagation();
-
-    const token = localStorage.getItem("token");
-
-    if (!isLoggedIn || !token) {
+    if (!currentUser) {
       toast.error("Please login to add items to your wishlist");
       navigate("/auth/login");
       return;
     }
-
+    const authToken = localStorage.getItem("token") || token; // Fallback to AuthContext
     const isInFavorites = favorites.some((item) => item._id === product._id);
-
     try {
       if (isInFavorites) {
-        const response = await axios.delete(`http://localhost:5000/api/wishlist/${product._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
+        const response = await axios.delete(
+          `http://localhost:5000/api/wishlist/${product._id}`,
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
         if (response.data.success) {
-          const updatedFavorites = favorites.filter((item) => item._id !== product._id);
+          const updatedFavorites = favorites.filter(
+            (item) => item._id !== product._id
+          );
           setFavorites(updatedFavorites);
           localStorage.setItem("wishlist", JSON.stringify(updatedFavorites));
           toast.success(`${product.title} removed from wishlist`);
@@ -204,13 +273,8 @@ const Browse = () => {
         const response = await axios.post(
           `http://localhost:5000/api/wishlist/${product._id}`,
           {},
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${authToken}` } }
         );
-
         if (response.data.success) {
           const updatedFavorites = [...favorites, product];
           setFavorites(updatedFavorites);
@@ -223,75 +287,67 @@ const Browse = () => {
     }
   };
 
-  const handleAddToCart = (product, e) => {
+  const handleAddToCart = async (product, e) => {
     e.stopPropagation();
-
-    const token = localStorage.getItem("token");
-
-    if (!isLoggedIn || !token) {
+    if (!currentUser) {
       toast.error("Please login to add items to your cart");
       navigate("/auth/login");
       return;
     }
-
+    const authToken = localStorage.getItem("token") || token; // Fallback to AuthContext
+    console.log("Token being sent:", authToken); // Debug token
+    if (!authToken) {
+      toast.error("No valid token, please login again");
+      navigate("/auth/login");
+      return;
+    }
     const isInCart = cart.some((item) => item._id === product._id);
-
     if (!isInCart) {
-      const updatedCart = [...cart, { ...product }];
-      setCart(updatedCart);
-      localStorage.setItem("cart", JSON.stringify(updatedCart));
-      toast.success(`${product.title} added to cart`);
+      try {
+        const response = await axios.post(
+          `http://localhost:5000/api/cart/add/${product._id}`,
+          {},
+          { headers: { Authorization: `Bearer ${authToken}` } }
+        );
+        if (response.data.success) {
+          setCart([...cart, product]); // Update local state
+          console.log("Added to cart for user:", currentUser._id, product._id);
+          toast.success(`${product.title} added to cart`);
+        }
+      } catch (error) {
+        console.error("Failed to add to cart:", error.response ? error.response.data : error.message);
+        toast.error("Failed to add to cart");
+      }
     } else {
       toast.info(`${product.title} is already in your cart`);
     }
   };
 
-  const handleContactSeller = () => {
-    if (!isLoggedIn) {
-      toast.error("Please login to contact the seller");
-      navigate("/auth/login");
-      return;
-    }
-  };
-
-  const isInFavorites = (productId) => {
-    return favorites.some((item) => item._id === productId);
-  };
-
-  const isInCart = (productId) => {
-    return cart.some((item) => item._id === productId);
-  };
-
   const handleIntent = async (product) => {
-    if (!isLoggedIn) {
+    if (!currentUser) {
       toast.error("Please login to register intent");
       navigate("/auth/login");
       return;
     }
-
-    const token = localStorage.getItem("token");
+    const authToken = localStorage.getItem("token") || token; // Fallback to AuthContext
     try {
-      console.log("Registering intent for product:", product._id, "Current User:", currentUser?._id);
       const response = await axios.post(
         `http://localhost:5000/api/products/${product._id}/intent`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${authToken}` } }
       );
-      console.log("Intent response:", response.data);
       if (response.data.success) {
         toast.success("Intent registered successfully!");
       } else {
         toast.error(response.data.message || "Failed to register intent");
       }
     } catch (error) {
-      console.error("Intent error:", error.response ? error.response.data : error.message);
-      toast.error(`Failed to register intent due to an error: ${error.response ? error.response.data : error.message}`);
+      toast.error("Failed to register intent");
     }
   };
+
+  const isInFavorites = (productId) => favorites.some((item) => item._id === productId);
+  const isInCart = (productId) => cart.some((item) => item._id === productId);
 
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
@@ -306,7 +362,7 @@ const Browse = () => {
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
-        <p className="mt-3">Loading products...</p>
+        <p>Loading products...</p>
       </div>
     );
   }
@@ -314,9 +370,7 @@ const Browse = () => {
   if (error) {
     return (
       <div className="container my-5">
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
+        <div className="alert alert-danger">{error}</div>
       </div>
     );
   }
@@ -328,13 +382,28 @@ const Browse = () => {
         <div className="filter-section">
           <h4>Category</h4>
           <select
-            onChange={(e) => setSelectedCategory(e.target.value)}
             value={selectedCategory}
+            onChange={handleCategoryChange}
             className="form-select"
           >
             {categories.map((cat) => (
-              <option key={cat} value={cat === "All Categories" ? "" : cat}>
+              <option key={cat} value={cat}>
                 {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-section">
+          <h4>Location</h4>
+          <select
+            value={selectedLocation}
+            onChange={handleLocationChange}
+            className="form-select"
+          >
+            {["Select University", ...colleges].map((college, index) => (
+              <option key={index} value={college}>
+                {college}
               </option>
             ))}
           </select>
@@ -346,21 +415,21 @@ const Browse = () => {
             <input
               type="number"
               placeholder="Min"
-              min="0"
               name="min"
               value={priceRange.min}
               onChange={handlePriceChange}
               className="form-control"
+              min="0"
             />
             <span>to</span>
             <input
               type="number"
               placeholder="Max"
-              min="0"
               name="max"
               value={priceRange.max}
               onChange={handlePriceChange}
               className="form-control"
+              min="0"
             />
           </div>
         </div>
@@ -369,15 +438,18 @@ const Browse = () => {
           <h4>Condition</h4>
           <div className="checkbox-group">
             {Object.keys(selectedConditions).map((condition) => (
-              <div className="form-check" key={condition}>
+              <div key={condition} className="form-check">
                 <input
                   type="checkbox"
-                  className="form-check-input"
                   id={`condition-${condition}`}
                   checked={selectedConditions[condition]}
                   onChange={() => handleConditionChange(condition)}
+                  className="form-check-input"
                 />
-                <label className="form-check-label" htmlFor={`condition-${condition}`}>
+                <label
+                  htmlFor={`condition-${condition}`}
+                  className="form-check-label"
+                >
                   {condition}
                 </label>
               </div>
@@ -388,7 +460,9 @@ const Browse = () => {
         <button
           className="btn btn-outline-secondary w-100 mt-3"
           onClick={() => {
-            setSelectedCategory("");
+            console.log("Resetting filters");
+            setSelectedCategory("All Categories");
+            setSelectedLocation("Select University");
             setPriceRange({ min: "", max: "" });
             setSelectedConditions({
               New: false,
@@ -405,9 +479,15 @@ const Browse = () => {
 
       <main className="main-content">
         <h2 className="category-title">{categoryTitle}</h2>
-
         <div className="sort-options">
-          <select onChange={(e) => setSortOption(e.target.value)} value={sortOption} className="form-select">
+          <select
+            value={sortOption}
+            onChange={(e) => {
+              console.log("Sort changed to:", e.target.value);
+              setSortOption(e.target.value);
+            }}
+            className="form-select"
+          >
             <option value="newest">Newest First</option>
             <option value="price-low">Price: Low to High</option>
             <option value="price-high">Price: High to Low</option>
@@ -432,15 +512,15 @@ const Browse = () => {
           {currentProducts.length > 0 ? (
             currentProducts.map((product) => (
               <div key={product._id} className="product-card">
-                <div className="product-image" onClick={() => navigate(`/product/${product._id}`)}>
-                  {product.photos && product.photos.length > 0 ? (
+                <div
+                  className="product-image"
+                  onClick={() => navigate(`/product/${product._id}`)}
+                >
+                  {product.photos?.length ? (
                     <img
                       src={`http://localhost:5000/uploads/${product.photos[0]}`}
                       alt={product.title}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://via.placeholder.com/200";
-                      }}
+                      onError={(e) => (e.target.src = "https://via.placeholder.com/200")}
                     />
                   ) : (
                     <div className="no-image-placeholder">No Image</div>
@@ -450,27 +530,37 @@ const Browse = () => {
                     className={`favorite-btn ${isInFavorites(product._id) ? "active" : ""}`}
                     onClick={(e) => toggleFavorite(product, e)}
                   >
-                    <Heart fill={isInFavorites(product._id) ? "currentColor" : "none"} />
+                    <Heart
+                      size={20}
+                      fill={isInFavorites(product._id) ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    />
                   </button>
                 </div>
                 <div className="product-info">
                   <h3>{product.title}</h3>
                   <p className="product-price">₹{product.price}</p>
                   <p className="product-location">
-                    <MapPin size={16} /> {product.location}
+                    <MapPin size={16} /> {product.location || "N/A"}
                   </p>
-                  {viewMode === "list" && <p className="product-description">{product.description}</p>}
-                  <div className="product-meta">
-                    <span className="product-date">{new Date(product.createdAt).toLocaleDateString()}</span>
-                  </div>
+                  {viewMode === "list" && (
+                    <p className="product-description">{product.description}</p>
+                  )}
                   <div className="product-actions">
-                    <Link to={`/product/${product._id}`} className="btn btn-primary btn-sm full-details-btn">
+                    <Link
+                      to={`/product/${product._id}`}
+                      className="btn btn-primary btn-sm"
+                    >
                       Full Details
                     </Link>
                     <button
                       onClick={() => handleIntent(product)}
-                      className="intent-to-buy-btn btn btn-sm"
-                      disabled={product.intentBy || product.seller.toString() === currentUser?._id}
+                      className="btn btn-sm intent-to-buy-btn"
+                      disabled={
+                        product.intentBy ||
+                        product.seller.toString() === currentUser?._id
+                      }
                     >
                       Intent to Buy
                     </button>
@@ -479,7 +569,8 @@ const Browse = () => {
                       onClick={(e) => handleAddToCart(product, e)}
                       disabled={isInCart(product._id)}
                     >
-                      <ShoppingCart size={16} /> {isInCart(product._id) ? "In Cart" : "Add to Cart"}
+                      <ShoppingCart size={16} />{" "}
+                      {isInCart(product._id) ? "In Cart" : "Add to Cart"}
                     </button>
                   </div>
                 </div>
@@ -487,7 +578,7 @@ const Browse = () => {
             ))
           ) : (
             <div className="no-products">
-              <p>No products found. Try adjusting your filters or search term. Check console for details.</p>
+              <p>No products found. Try adjusting your filters or search term.</p>
               <Link to="/sell" className="btn btn-primary mt-3">
                 List an Item
               </Link>

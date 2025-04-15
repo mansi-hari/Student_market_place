@@ -11,14 +11,9 @@ import {
   FaTimes,
   FaUser,
   FaUserPlus,
-  FaAd,
-  FaComments,
-  FaMoneyCheckAlt,
   FaHeart,
   FaSignOutAlt,
-  FaMapMarkerAlt,
 } from "react-icons/fa";
-import { colleges } from "../../utils/colleges";
 import { useAuth } from "../../Context/AuthContext";
 
 const Navbar = () => {
@@ -28,8 +23,6 @@ const Navbar = () => {
   const [menu, setMenu] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [locationInput, setLocationInput] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     const path = location.pathname;
@@ -41,49 +34,30 @@ const Navbar = () => {
     else setMenu("");
   }, [location.pathname]);
 
-  const handleLocationChange = (event) => {
-    const value = event.target.value;
-    setLocationInput(value);
-
-    if (value.trim()) {
-      const filteredSuggestions = colleges.filter((college) =>
-        college.toLowerCase().includes(value.toLowerCase())
-      );
-      setSuggestions(filteredSuggestions);
-    } else {
-      setSuggestions([]);
-    }
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    setLocationInput(suggestion);
-    setSuggestions([]);
-  };
-
   const handleSearchChange = (event) => {
     setSearch(event.target.value);
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (search.trim()) {
-      const searchParams = new URLSearchParams();
-      searchParams.set("search", search);
-      if (locationInput && locationInput !== "Select University") {
-        searchParams.set("college", locationInput);
-      }
-      navigate(`/products?${searchParams.toString()}`);
-      setSearch("");
-      setLocationInput("");
-      setIsSidebarOpen(false);
-    } else {
+    const trimmedSearch = search.trim();
+
+    if (!trimmedSearch) {
       toast.error("Please enter a search term");
+      return;
     }
+
+    const searchParams = new URLSearchParams();
+    searchParams.set("search", trimmedSearch);
+
+    navigate(`/products?${searchParams.toString()}`);
+    setSearch("");
+    setIsSidebarOpen(false);
   };
 
   const handleLogout = async () => {
     await logout();
-    navigate("/"); // Navigate after logout
+    navigate("/");
     setIsSidebarOpen(false);
   };
 
@@ -110,32 +84,6 @@ const Navbar = () => {
           <div className="logo-text">
             <p>Student Marketplace</p>
             <p className="location-text">MOHAN NAGAR</p>
-          </div>
-        </div>
-
-        <div className="location-search-container">
-          <div className="location-placeholder">
-            <FaMapMarkerAlt className="location-icon" />
-            <input
-              type="text"
-              placeholder="Select your college"
-              value={locationInput}
-              onChange={handleLocationChange}
-              className="location-input"
-            />
-            {suggestions.length > 0 && (
-              <ul className="suggestions-list">
-                {suggestions.map((suggestion, index) => (
-                  <li
-                    key={index}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="suggestion-item"
-                  >
-                    {suggestion}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
         </div>
 
