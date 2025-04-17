@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../Context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import axios from "axios";
 
 const Dashboard = () => {
   const { currentUser, logout, fetchDashboardData } = useAuth() || {};
@@ -61,19 +62,23 @@ const Dashboard = () => {
   };
 
   const confirmSale = async () => {
+    if (!buyerEmail) {
+      setErrorMessage("Buyer email is required");
+      return;
+    }
+    setErrorMessage(""); // Clear previous errors
     try {
-      console.log("Sending request to:", `http://localhost:5000/api/products/${selectedProductId}/sold`);
-      const response = await fetch(`http://localhost:5000/api/products/${selectedProductId}/sold`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ buyerEmail }),
-      });
-      const data = await response.json();
-      console.log("Response data:", data);
-      if (data.success) {
+      const response = await axios.put(
+        `http://localhost:5000/api/products/${selectedProductId}/sold`,
+        { buyerEmail },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      if (response.data.success) {
         toast.success("Item marked as sold!");
         setDashboardData((prev) => ({
           ...prev,
@@ -82,11 +87,11 @@ const Dashboard = () => {
         }));
         setShowModal(false);
       } else {
-        setErrorMessage(data.error || data.message || "Failed to mark as sold");
+        setErrorMessage(response.data.message || "Failed to mark as sold");
       }
     } catch (error) {
       console.error("Sale error:", error);
-      setErrorMessage(error.message || "Failed to mark as sold");
+      setErrorMessage(error.response?.data?.message || "Server error, please try again later");
     }
   };
 

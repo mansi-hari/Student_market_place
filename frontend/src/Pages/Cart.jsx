@@ -39,7 +39,7 @@ const Cart = () => {
       await axios.delete(`http://localhost:5000/api/cart/remove/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const updatedCart = cart.filter((item) => item.product._id !== productId);
+      const updatedCart = cart.filter((item) => item.product?._id !== productId); // Safe access
       setCart(updatedCart);
       console.log("Item removed from cart:", productId);
     } catch (error) {
@@ -57,12 +57,12 @@ const Cart = () => {
       ) : (
         <div className="cart-items">
           {cart.map((item) => (
-            <div key={item.product._id} className="cart-item-card">
+            <div key={item.product?._id} className="cart-item-card">
               <div className="item-image">
-                {item.product.photos && item.product.photos.length > 0 ? (
+                {item.product?.photos && item.product.photos.length > 0 ? (
                   <img
                     src={`http://localhost:5000/uploads/${item.product.photos[0]}`}
-                    alt={item.product.title}
+                    alt={item.product?.title}
                     onError={(e) => {
                       e.target.onerror = null;
                       e.target.src = "https://via.placeholder.com/100?text=No+Image";
@@ -73,18 +73,18 @@ const Cart = () => {
                 )}
               </div>
               <div className="item-details">
-                <h3 className="item-title">{item.product.title}</h3>
-                <p className="item-price">Price: ₹{item.product.price}</p>
-                <p className="item-condition">Condition: {item.product.condition || "N/A"}</p>
+                <h3 className="item-title">{item.product?.title || "N/A"}</h3>
+                <p className="item-price">Price: ₹{item.product?.price || 0}</p>
+                <p className="item-condition">Condition: {item.product?.condition || "N/A"}</p>
                 <p className="item-location">
-                  {item.product.location} {item.product.pincode && `(${item.product.pincode})`}
+                  {item.product?.location} {item.product?.pincode && `(${item.product.pincode})`}
                 </p>
               </div>
               <div className="item-actions">
-                <Link to={`/product/${item.product._id}`} className="btn view-details-btn">
+                <Link to={`/product/${item.product?._id}`} className="btn view-details-btn">
                   View Details
                 </Link>
-                <button className="btn remove-btn" onClick={() => removeFromCart(item.product._id)}>
+                <button className="btn remove-btn" onClick={() => removeFromCart(item.product?._id)}>
                   Remove
                 </button>
               </div>
