@@ -3,6 +3,7 @@ import { useAuth } from "../Context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import './Dashboard.css'; 
 
 const Dashboard = () => {
   const { currentUser, logout, fetchDashboardData } = useAuth() || {};
@@ -206,7 +207,7 @@ const Dashboard = () => {
                         <td>{listing.title}</td>
                         <td>${listing.price}</td>
                         <td>{new Date(listing.createdAt).toLocaleDateString()}</td>
-                        {!listing.isSold && <td><button onClick={() => handleMarkAsSold(listing._id)}>Mark as Sold</button></td>}
+                        {!listing.isSold && <td><button onClick={() => handleMarkAsSold(listing._id)} className="btn btn-dark">Mark as Sold</button></td>}
                       </tr>
                     ))}
                   </tbody>
@@ -304,17 +305,25 @@ const Dashboard = () => {
         </div>
       </div>
       {showModal && (
-        <div className="modal">
-          <h4>Confirm Sale</h4>
-          <input
-            type="email"
-            value={buyerEmail}
-            onChange={(e) => setBuyerEmail(e.target.value)}
-            placeholder="Enter buyer email"
-          />
-          {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
-          <button onClick={confirmSale}>Confirm Sale</button>
-          <button onClick={() => setShowModal(false)}>Cancel</button>
+        <div className="modal-overlay">
+          <div className="confirm-sale-modal">
+            <h3>Confirm Sale</h3>
+            <div className="form-group">
+              <label htmlFor="buyerEmail">Buyer Email</label>
+              <input
+                type="email"
+                id="buyerEmail"
+                value={buyerEmail}
+                onChange={(e) => setBuyerEmail(e.target.value)}
+                placeholder="Enter buyer email"
+              />
+              {errorMessage && <p className="error-message">{errorMessage}</p>}
+            </div>
+            <div className="modal-actions">
+              <button onClick={confirmSale} className="btn btn-primary">Confirm Sale</button>
+              <button onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
