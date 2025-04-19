@@ -11,16 +11,16 @@ const Browse = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { category } = useParams();
-  const { currentUser, token } = useAuth(); // Using token from AuthContext
+  const { currentUser, token } = useAuth(); 
   const [viewMode, setViewMode] = useState("grid");
   const [favorites, setFavorites] = useState([]);
-  const [cart, setCart] = useState([]); // Will be synced with server
+  const [cart, setCart] = useState([]); 
   const [sortOption, setSortOption] = useState("newest");
   const [displayProducts, setDisplayProducts] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [categoryTitle, setCategoryTitle] = useState("All Products");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(null); 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [selectedConditions, setSelectedConditions] = useState({
@@ -45,12 +45,32 @@ const Browse = () => {
   ];
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("token"); // Get token from localStorage
-    const authToken = token || storedToken; // Prefer AuthContext token, fallback to localStorage
+    const storedToken = localStorage.getItem("token"); 
+    const authToken = token || storedToken; 
     setIsLoggedIn(!!authToken);
 
-    const savedFavorites = JSON.parse(localStorage.getItem("wishlist") || "[]");
-    setFavorites(savedFavorites);
+    // Fetch user-specific favorites from server
+    const fetchFavorites = async () => {
+      if (authToken && currentUser?._id) {
+        try {
+          const response = await axios.get(
+            `http://localhost:5000/api/wishlist`,
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          if (response.data.success) {
+            setFavorites(response.data.data.products || []);
+          } else {
+            console.log("Wishlist fetch failed, server response:", response.data);
+            setFavorites([]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch wishlist:", error.message);
+          setFavorites([]);
+          toast.error("Failed to load wishlist, check backend endpoint");
+        }
+      }
+    };
+    fetchFavorites();
 
     // Fetch cart from server
     const fetchCart = async () => {
@@ -88,7 +108,10 @@ const Browse = () => {
 
       const queryParams = new URLSearchParams();
       if (search) queryParams.set("search", search);
-      if (college) queryParams.set("college", college);
+      if (college) {
+        queryParams.set("college", college);
+        setSelectedLocation(college); // Auto-set selected location from URL
+      }
 
       let url = category
         ? `http://localhost:5000/api/products/category/${category}`
@@ -124,17 +147,10 @@ const Browse = () => {
     console.log("Checking location:", lowerLocation);
     for (let college of colleges) {
       if (college === "Select University") continue;
-      const collegeName = college.toLowerCase().replace(/\s+/g, " ");
+      const collegeName = college.toLowerCase().trim();
       console.log("Comparing with college:", collegeName);
-      if (lowerLocation === collegeName || lowerLocation.includes(collegeName)) {
+      if (lowerLocation === collegeName) { 
         console.log("Exact match found:", college);
-        return college;
-      }
-      const keywords = collegeName.split(" ").filter(word => ["college", "institute", "academy"].includes(word) || word.length > 4);
-      console.log("Keywords for", collegeName, ":", keywords);
-      const matchedKeyword = keywords.find(keyword => lowerLocation.includes(keyword));
-      if (matchedKeyword) {
-        console.log("Keyword match found for", college, "with keyword:", matchedKeyword);
         return college;
       }
     }
@@ -163,11 +179,10 @@ const Browse = () => {
 
     if (selectedLocation && selectedLocation !== "Select University") {
       filteredProducts = filteredProducts.filter((product) => {
-        const productLocation = (product.location || "").toLowerCase().trim();
-        const selected = selectedLocation.toLowerCase();
-        const collegeFromLocation = getCollegeFromLocation(product.location);
-        console.log(`Checking product ${product._id}: location=${productLocation}, selected=${selected}, collegeMatch=${collegeFromLocation}`);
-        return collegeFromLocation.toLowerCase() === selected;
+        const productLocation = product.location || "";
+        const collegeMatch = getCollegeFromLocation(productLocation);
+        console.log(`Checking product ${product._id}: location=${productLocation}, selected=${selectedLocation}, collegeMatch=${collegeMatch}`);
+        return collegeMatch === selectedLocation;
       });
       console.log(`Filtered by location ${selectedLocation}:`, filteredProducts.length);
     }
@@ -253,7 +268,7 @@ const Browse = () => {
       navigate("/auth/login");
       return;
     }
-    const authToken = localStorage.getItem("token") || token; // Fallback to AuthContext
+    const authToken = localStorage.getItem("token") || token; 
     const isInFavorites = favorites.some((item) => item._id === product._id);
     try {
       if (isInFavorites) {
@@ -262,11 +277,8 @@ const Browse = () => {
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         if (response.data.success) {
-          const updatedFavorites = favorites.filter(
-            (item) => item._id !== product._id
-          );
+          const updatedFavorites = favorites.filter((item) => item._id !== product._id);
           setFavorites(updatedFavorites);
-          localStorage.setItem("wishlist", JSON.stringify(updatedFavorites));
           toast.success(`${product.title} removed from wishlist`);
         }
       } else {
@@ -278,11 +290,28 @@ const Browse = () => {
         if (response.data.success) {
           const updatedFavorites = [...favorites, product];
           setFavorites(updatedFavorites);
-          localStorage.setItem("wishlist", JSON.stringify(updatedFavorites));
           toast.success(`${product.title} added to wishlist`);
         }
       }
+      // Refetch favorites to ensure sync with server
+      const fetchFavorites = async () => {
+        try {
+          const response = await axios.get(
+            `http://localhost:5000/api/wishlist`,
+            { headers: { Authorization: `Bearer ${authToken}` } }
+          );
+          if (response.data.success) {
+            setFavorites(response.data.data.products || []);
+          } else {
+            console.log("Refetch failed, server response:", response.data);
+          }
+        } catch (error) {
+          console.error("Failed to refetch wishlist:", error.message);
+        }
+      };
+      fetchFavorites();
     } catch (error) {
+      console.error("Toggle favorite error:", error.message);
       toast.error("Failed to update wishlist");
     }
   };
@@ -294,8 +323,8 @@ const Browse = () => {
       navigate("/auth/login");
       return;
     }
-    const authToken = localStorage.getItem("token") || token; // Fallback to AuthContext
-    console.log("Token being sent:", authToken); // Debug token
+    const authToken = localStorage.getItem("token") || token; 
+    console.log("Token being sent:", authToken); 
     if (!authToken) {
       toast.error("No valid token, please login again");
       navigate("/auth/login");
@@ -310,7 +339,7 @@ const Browse = () => {
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         if (response.data.success) {
-          setCart([...cart, product]); // Update local state
+          setCart([...cart, product]); 
           console.log("Added to cart for user:", currentUser._id, product._id);
           toast.success(`${product.title} added to cart`);
         }
@@ -329,7 +358,7 @@ const Browse = () => {
       navigate("/auth/login");
       return;
     }
-    const authToken = localStorage.getItem("token") || token; // Fallback to AuthContext
+    const authToken = localStorage.getItem("token") || token; 
     try {
       const response = await axios.post(
         `http://localhost:5000/api/products/${product._id}/intent`,

@@ -67,7 +67,7 @@ const Dashboard = () => {
       setErrorMessage("Buyer email is required");
       return;
     }
-    setErrorMessage(""); // Clear previous errors
+    setErrorMessage(""); 
     try {
       const response = await axios.put(
         `http://localhost:5000/api/products/${selectedProductId}/sold`,
