@@ -1,7 +1,5 @@
-// server.js (updated)
 require("dotenv").config({ path: "./.env" });
 
-// Import Modules
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -18,14 +16,12 @@ const authRoutes = require("./routes/authRoutes");
 const productRoutes = require("./routes/productRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
-const messageRoutes = require("./routes/messageRoutes");
-const locationRoutes = require("./routes/locationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const cartRoutes = require("./routes/cartRoutes"); // Add this import
 const { errorHandler } = require("./middleware/errorMiddleware.js");
 
-// Initialize Express App
+
 const app = express();
 
 // Middleware
@@ -58,11 +54,9 @@ app.use("/api", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/messages", messageRoutes);
-app.use("/api/location", locationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/cart", cartRoutes); // Add this line to mount cart routes
+app.use("/api/cart", cartRoutes); 
 
 // Error Handling Middleware
 app.use(errorHandler);
