@@ -1,6 +1,5 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import React, { useEffect } from 'react';
-
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './Context/AuthContext';
@@ -53,8 +52,7 @@ const AppContent = () => {
     { Path: "/browse/:category", Component: "Browse" },
     { Path: "/products/category/:categoryName", Component: "CategoryPage" },
     { Path: "/product/:productId", Component: "ProductDetail" },
-    
-    { Path: "/auth/login", Component: "Login" },
+     { Path: "/auth/login", Component: "Login" },
     { Path: "/auth/signup", Component: "Signup" },
     { Path: "/sell", Component: "SellPage (Protected)" },
     { Path: "/wishlist", Component: "WishlistPage (Protected)" },

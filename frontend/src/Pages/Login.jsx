@@ -2,8 +2,8 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { useAuth } from "../Context/AuthContext"; // Import useAuth
-
+import { useAuth } from "../Context/AuthContext"; 
+const url = process.env.REACT_APP_API_URL;
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,9 +11,9 @@ const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // Use login function from AuthContext
+  const { login } = useAuth(); 
 
-  const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const API_URL = process.env.REACT_APP_API_URL || `${url}`;
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,17 +22,14 @@ const Login = () => {
 
     try {
       const credentials = { email, password };
-      const response = await login(credentials); // Call AuthContext login
-
+      const response = await login(credentials); 
       if (response.success) {
-        const token = response.token; // Directly access token from response
-        const user = response.user; // Directly access user from response
-
-       
+        const token = response.token; 
+        const user = response.user; 
+      
 
         toast.success("Login successful!");
-        // Let App.js handle redirect based on currentUser
-        navigate("/"); // Temporary redirect, will be overridden by App.js
+                navigate("/");
       } else {
         setError(response.message || "Login failed");
       }

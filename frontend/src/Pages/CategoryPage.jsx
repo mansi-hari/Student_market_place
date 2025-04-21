@@ -1,11 +1,10 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import axios from "axios"
 import { toast } from "react-hot-toast"
 import { Heart } from 'lucide-react'
 
+const url = process.env.REACT_APP_API_URL;
 const CategoryPage = () => {
   const { categoryName } = useParams()
   const [products, setProducts] = useState([])
@@ -19,7 +18,7 @@ const CategoryPage = () => {
       try {
         setLoading(true)
         // Fetch products by category
-        const response = await axios.get(`http://localhost:5000/api/products/category/${categoryName}`)
+        const response = await axios.get(`${url}/api/products/category/${categoryName}`)
 
         if (Array.isArray(response.data)) {
           setProducts(response.data)
@@ -53,7 +52,7 @@ const CategoryPage = () => {
   }, [wishlist])
 
   const handleAddToWishlist = (product, e) => {
-    e.stopPropagation() // Prevent the product click event
+    e.stopPropagation() 
 
     // Check if user is logged in
     if (!isLoggedIn) {
@@ -107,7 +106,7 @@ const CategoryPage = () => {
                 <div className="card-img-top-container">
                   {product.photos && product.photos.length > 0 ? (
                     <img
-                      src={`http://localhost:5000/uploads/${product.photos[0]}`}
+                      src={`${url}/uploads/${product.photos[0]}`}
                       className="card-img-top"
                       alt={product.title}
                       style={{ height: "200px", objectFit: "cover" }}

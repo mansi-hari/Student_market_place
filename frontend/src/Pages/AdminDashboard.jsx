@@ -12,9 +12,11 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const url = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    console.log("Current User in Dashboard:", currentUser); // Debug
+    console.log("Current User in Dashboard:", currentUser);
+    console.log(url)
     if (!currentUser) {
       window.location.href = "/auth/login";
       return;
@@ -35,7 +37,7 @@ const AdminDashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/admin/dashboard", {
+      const response = await axios.get(`${url}/api/admin/dashboard`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       console.log("Dashboard Stats Response (Raw):", response.data);
@@ -58,7 +60,7 @@ const AdminDashboard = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/admin/products", {
+      const response = await axios.get(`${url}/api/admin/products`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       console.log("Products Response:", response.data);
@@ -72,7 +74,7 @@ const AdminDashboard = () => {
 
   const fetchPendingIntents = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/admin/pending-intents", {
+      const response = await axios.get(`${url}/api/admin/pending-intents`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       console.log("Pending Intents Response:", response.data);
@@ -92,7 +94,7 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/admin/users", {
+      const response = await axios.get(`${url}/api/admin/users`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       console.log("Users Response:", response.data);
@@ -107,7 +109,7 @@ const AdminDashboard = () => {
   const handleDeleteProduct = async (productId) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/products/${productId}`, {
+        await axios.delete(`${url}/api/admin/products/${productId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         setProducts(products.filter((p) => p._id !== productId));
@@ -122,7 +124,7 @@ const AdminDashboard = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/admin/users/${userId}`, {
+        await axios.delete(`${url}/api/admin/users/${userId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         setUsers(users.filter((u) => u._id !== userId));
@@ -138,7 +140,7 @@ const AdminDashboard = () => {
     if (window.confirm("Are you sure you want to approve this sale?")) {
       try {
         await axios.post(
-          `http://localhost:5000/api/products/${productId}/approve-sale`,
+          `${url}/api/products/${productId}/approve-sale`,
           {},
           {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

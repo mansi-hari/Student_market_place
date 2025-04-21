@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import axios from "axios";
 import './Dashboard.css'; 
 
+const url = process.env.REACT_APP_API_URL;
 const Dashboard = () => {
   const { currentUser, logout, fetchDashboardData } = useAuth() || {};
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ const Dashboard = () => {
     setErrorMessage(""); 
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/products/${selectedProductId}/sold`,
+        `${url}/api/products/${selectedProductId}/sold`,
         { buyerEmail },
         {
           headers: {

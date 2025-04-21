@@ -20,7 +20,7 @@ const HowItWorks = () => {
       icon: <ShoppingBag size={32} />,
       title: "Buy & Sell",
       description: "Find great deals and chat with sellers on campus",
-      link: "/products", // The path for the Buy & Sell page
+      link: "/products", 
     },
   ];
 
@@ -74,7 +74,7 @@ const HowItWorks = () => {
                 }}
               >
                 <Link
-                  to={step.link} // Use the link for navigation
+                  to={step.link} 
                   style={{
                     textDecoration: "none",
                     color: "#2d3748",

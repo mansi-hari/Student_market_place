@@ -8,7 +8,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 // Get Environment Variables
-const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/marketplace"; // Default fallback
+const mongoURI = process.env.MONGODB_URI || "mongodb://localhost:27017/marketplace"; 
 const PORT = process.env.PORT || 5000;
 
 // Import Routes & Models
@@ -18,7 +18,7 @@ const wishlistRoutes = require("./routes/wishlistRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const cartRoutes = require("./routes/cartRoutes"); // Add this import
+const cartRoutes = require("./routes/cartRoutes"); 
 const { errorHandler } = require("./middleware/errorMiddleware.js");
 
 
@@ -40,14 +40,12 @@ console.log("PORT:", PORT);
 // Connect to MongoDB with better error handling
 mongoose
   .connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
   })
   .then(() => console.log("✅ MongoDB Connected Successfully"))
   .catch((err) => {
     console.error("❌ MongoDB Connection Error:", err.message);
-    process.exit(1); // Exit if MongoDB fails to connect
+    process.exit(1); 
   });
 
 app.use("/api", productRoutes);

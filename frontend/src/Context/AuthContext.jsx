@@ -1,7 +1,7 @@
 import { createContext, useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
-
+const url = process.env.REACT_APP_API_URL;
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
         return null;
       }
 
-      const response = await axios.get("http://localhost:5000/api/auth/me", {
+      const response = await axios.get(`${url}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = response.data.data || response.data.user || response.data;
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
   const loginUser = async (credentials) => {
     try {
       setError(null);
-      const response = await axios.post("http://localhost:5000/api/auth/login", credentials);
+      const response = await axios.post(`${url}/api/auth/login`, credentials);
       console.log("Raw login response:", response.data);
       const userData = response.data.data?.user || response.data.user;
       const token = response.data.data?.token || response.data.token;
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }) => {
   const signupUser = async (userData) => {
     try {
       setError(null);
-      const response = await axios.post("http://localhost:5000/api/auth/register", userData);
+      const response = await axios.post(`${url}/api/auth/register`, userData);
       const user = response.data.data?.user || response.data.user;
       setUserAndLocalStorage(user);
       const freshUserData = await getCurrentUser();
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/auth/dashboard", {
+      const response = await axios.get(`${url}/api/auth/dashboard`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       console.log("Dashboard Data:", response.data);
@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }) => {
   const registerIntent = async (productId) => {
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/products/${productId}/intent`,
+        `${url} /api/products/${productId}/intent`,
         {},
         { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
@@ -170,7 +170,7 @@ export const AuthProvider = ({ children }) => {
         getCurrentUser,
         fetchDashboardData,
         registerIntent,
-        token: currentUser?.token || localStorage.getItem("token"), // Expose token
+        token: currentUser?.token || localStorage.getItem("token"), 
       }}
     >
       {children}

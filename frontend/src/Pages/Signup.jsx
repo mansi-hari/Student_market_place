@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-hot-toast"; // Added for popup notifications
+import { toast } from "react-hot-toast"; 
 import "./Signup.css";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const url = process.env.REACT_APP_API_URL;
+const API_URL = process.env.REACT_APP_API_URL || `${url}`;
 
 const Signup = () => {
   const [name, setName] = useState("");
@@ -30,7 +31,6 @@ const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    // Validation
     if (!name || !email || !password || !university || !location.formatted || !location.pinCode) {
       setErrorMessage("All fields are required.");
       toast.error("All fields are required.", { position: "top-center" });
@@ -41,7 +41,7 @@ const Signup = () => {
       name,
       email,
       password,
-      sellerUniversity: university, // Changed to match backend field name
+      sellerUniversity: university, 
       location: {
         formatted: location.formatted,
         pinCode: location.pinCode,
@@ -51,11 +51,11 @@ const Signup = () => {
     try {
       const response = await axios.post(`${API_URL}/api/auth/signup`, userData);
       if (response.data.success) {
-        localStorage.setItem("token", response.data.token); // Save the token in localStorage
+        localStorage.setItem("token", response.data.token); 
         setSuccessMessage("Successfully signed up!");
         toast.success("Successfully signed up!", { position: "top-center" });
         setTimeout(() => {
-          navigate("/"); // Redirect after 2 seconds
+          navigate("/"); 
         }, 2000);
       }
     } catch (error) {
@@ -64,7 +64,7 @@ const Signup = () => {
       setErrorMessage(errorMsg);
       if (errorMsg.includes("Mohan Nagar")) {
         toast.error(errorMsg, {
-          duration: 5000, // 5 seconds
+          duration: 5000, 
           position: "top-center",
         });
       } else {

@@ -7,6 +7,8 @@ import { useAuth } from "../Context/AuthContext";
 import { colleges } from "../utils/colleges";
 import "./Browse.css";
 
+const url = process.env.REACT_APP_API_URL;
+
 const Browse = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +56,7 @@ const Browse = () => {
       if (authToken && currentUser?._id) {
         try {
           const response = await axios.get(
-            `http://localhost:5000/api/wishlist`,
+            `${url}/api/wishlist`,
             { headers: { Authorization: `Bearer ${authToken}` } }
           );
           if (response.data.success) {
@@ -76,7 +78,7 @@ const Browse = () => {
     const fetchCart = async () => {
       if (authToken && currentUser?._id) {
         try {
-          const response = await axios.get(`http://localhost:5000/api/cart`, {
+          const response = await axios.get(`${url}/api/cart`, {
             headers: { Authorization: `Bearer ${authToken}` },
           });
           if (response.data.success) {
@@ -110,19 +112,19 @@ const Browse = () => {
       if (search) queryParams.set("search", search);
       if (college) {
         queryParams.set("college", college);
-        setSelectedLocation(college); // Auto-set selected location from URL
+        setSelectedLocation(college); 
       }
 
-      let url = category
-        ? `http://localhost:5000/api/products/category/${category}`
-        : `http://localhost:5000/api/products`;
+      let combinedurl = category
+        ? `${url}/api/products/category/${category}`
+        : `${url}/api/products`;
 
       const queryString = queryParams.toString();
       if (queryString) {
-        url += `?${queryString}`;
+        combinedurl += `?${queryString}`;
       }
 
-      const response = await axios.get(url);
+      const response = await axios.get(combinedurl);
       console.log("Fetched products with locations:", response.data.map((p) => ({ _id: p._id, location: p.location })));
 
       if (Array.isArray(response.data)) {
@@ -273,7 +275,7 @@ const Browse = () => {
     try {
       if (isInFavorites) {
         const response = await axios.delete(
-          `http://localhost:5000/api/wishlist/${product._id}`,
+          `${url}/api/wishlist/${product._id}`,
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
         if (response.data.success) {
@@ -283,7 +285,7 @@ const Browse = () => {
         }
       } else {
         const response = await axios.post(
-          `http://localhost:5000/api/wishlist/${product._id}`,
+          `${url}/api/wishlist/${product._id}`,
           {},
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
@@ -297,7 +299,7 @@ const Browse = () => {
       const fetchFavorites = async () => {
         try {
           const response = await axios.get(
-            `http://localhost:5000/api/wishlist`,
+            `${url}/api/wishlist`,
             { headers: { Authorization: `Bearer ${authToken}` } }
           );
           if (response.data.success) {
@@ -334,7 +336,7 @@ const Browse = () => {
     if (!isInCart) {
       try {
         const response = await axios.post(
-          `http://localhost:5000/api/cart/add/${product._id}`,
+          `${url}/api/cart/add/${product._id}`,
           {},
           { headers: { Authorization: `Bearer ${authToken}` } }
         );
@@ -361,7 +363,7 @@ const Browse = () => {
     const authToken = localStorage.getItem("token") || token; 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/products/${product._id}/intent`,
+        `${url}/api/products/${product._id}/intent`,
         {},
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
@@ -547,7 +549,7 @@ const Browse = () => {
                 >
                   {product.photos?.length ? (
                     <img
-                      src={`http://localhost:5000/uploads/${product.photos[0]}`}
+                      src={`${url}/uploads/${product.photos[0]}`}
                       alt={product.title}
                       onError={(e) => (e.target.src = "https://via.placeholder.com/200")}
                     />

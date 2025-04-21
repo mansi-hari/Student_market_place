@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { useNavigate, Link } from "react-router-dom"
@@ -7,6 +5,7 @@ import { toast } from "react-hot-toast"
 import { ShoppingBag, Trash2 } from "lucide-react"
 import "./WishlistPage.css"
 
+const url = process.env.REACT_APP_API_URL;
 const WishlistPage = () => {
   const [wishlistItems, setWishlistItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,7 +23,7 @@ const WishlistPage = () => {
 
       try {
         setLoading(true)
-        const response = await axios.get("http://localhost:5000/api/wishlist", {
+        const response = await axios.get(`${url}/api/wishlist`, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
@@ -49,7 +48,7 @@ const WishlistPage = () => {
     const token = localStorage.getItem("token")
 
     try {
-      const response = await axios.delete(`http://localhost:5000/api/wishlist/${productId}`, {
+      const response = await axios.delete(`${url}/api/wishlist/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -100,7 +99,7 @@ const WishlistPage = () => {
                 <div className="wishlist-image-container">
                   {item.photos && item.photos.length > 0 ? (
                     <img
-                      src={`http://localhost:5000/uploads/${item.photos[0]}`}
+                      src={`${url}/uploads/${item.photos[0]}`}
                       className="card-img-top wishlist-image"
                       alt={item.title}
                       onClick={() => handleViewProduct(item._id)}

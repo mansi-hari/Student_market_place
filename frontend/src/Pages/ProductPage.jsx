@@ -4,6 +4,7 @@ import axios from "axios"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
+const url = process.env.REACT_APP_API_URL;
 const ProductPage = () => {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -13,7 +14,7 @@ const ProductPage = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        const response = await axios.get("http://localhost:5000/api/products")
+        const response = await axios.get(`${url}/api/products`)
         console.log("Products response:", response.data)
         setProducts(response.data || [])
         setLoading(false)
@@ -28,7 +29,7 @@ const ProductPage = () => {
     fetchProducts()
   }, [])
 
-  return null // No product display on this page
+  return null 
 }
 
 export default ProductPage

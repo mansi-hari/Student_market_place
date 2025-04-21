@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import "./Cart.css";
 import { useAuth } from "../Context/AuthContext";
 import axios from "axios";
+const url = process.env.REACT_APP_API_URL;
 
 const Cart = () => {
   const [cart, setCart] = useState([]);
@@ -16,7 +17,7 @@ const Cart = () => {
       }
 
       try {
-        const response = await axios.get("http://localhost:5000/api/cart", {
+        const response = await axios.get(`${url}/api/cart`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log("Cart data fetched from server:", response.data.cart);
@@ -36,10 +37,10 @@ const Cart = () => {
     }
 
     try {
-      await axios.delete(`http://localhost:5000/api/cart/remove/${productId}`, {
+      await axios.delete(`${url}/api/cart/remove/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const updatedCart = cart.filter((item) => item.product?._id !== productId); // Safe access
+      const updatedCart = cart.filter((item) => item.product?._id !== productId); 
       setCart(updatedCart);
       console.log("Item removed from cart:", productId);
     } catch (error) {
@@ -61,7 +62,7 @@ const Cart = () => {
               <div className="item-image">
                 {item.product?.photos && item.product.photos.length > 0 ? (
                   <img
-                    src={`http://localhost:5000/uploads/${item.product.photos[0]}`}
+                    src={`${url}/uploads/${item.product.photos[0]}`}
                     alt={item.product?.title}
                     onError={(e) => {
                       e.target.onerror = null;

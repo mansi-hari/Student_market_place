@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import "./ProductDetail.css";
 
+const url = process.env.REACT_APP_API_URL;
 const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
@@ -25,18 +26,18 @@ const ProductDetail = () => {
   const [similarProducts, setSimilarProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [showContactInfo, setShowContactInfo] = useState(false); // Changed to showContactInfo
+  const [showContactInfo, setShowContactInfo] = useState(false); 
 
-  // Auth state from localStorage (simulating useAuth context)
+ 
   const token = localStorage.getItem("token");
   const isLoggedIn = !!token;
-  const currentUserId = token ? JSON.parse(atob(token.split('.')[1])).id : null; // Extract userId from token (example)
+  const currentUserId = token ? JSON.parse(atob(token.split('.')[1])).id : null; 
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/products/${productId}`);
+        const response = await axios.get(`${url}/api/products/${productId}`);
         setProduct(response.data);
         checkWishlistStatus(response.data._id);
         fetchSimilarProducts(response.data.category);
@@ -56,7 +57,7 @@ const ProductDetail = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
     try {
-      const response = await axios.get(`http://localhost:5000/api/wishlist/check/${id}`, {
+      const response = await axios.get(`${url}/api/wishlist/check/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setInWishlist(response.data.isInWishlist);
@@ -65,7 +66,7 @@ const ProductDetail = () => {
 
   const fetchSimilarProducts = async (category) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/products?category=${category}&limit=4`);
+      const response = await axios.get(`${url}/api/products?category=${category}&limit=4`);
       setSimilarProducts(response.data.filter((p) => p._id !== productId).slice(0, 3));
     } catch (error) {}
   };
@@ -79,13 +80,13 @@ const ProductDetail = () => {
     }
     try {
       if (inWishlist) {
-        await axios.delete(`http://localhost:5000/api/wishlist/${productId}`, {
+        await axios.delete(`${url}/api/wishlist/${productId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setInWishlist(false);
         toast.success("Removed from wishlist");
       } else {
-        await axios.post(`http://localhost:5000/api/wishlist/${productId}`, {}, {
+        await axios.post(`${url}/api/wishlist/${productId}`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setInWishlist(true);
@@ -120,7 +121,7 @@ const ProductDetail = () => {
       navigator.share({
         title: product.title,
         text: `Check out this ${product.title} on Student Marketplace`,
-        url: window.location.href,
+        redirectUrl: window.location.href,
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -140,7 +141,7 @@ const ProductDetail = () => {
       return;
     }
     console.log("Contact Seller Data:", product.seller);
-    setShowContactInfo(!showContactInfo); // Toggle contact info visibility
+    setShowContactInfo(!showContactInfo); 
   };
 
   const handleIntent = async (product) => {
@@ -157,7 +158,7 @@ const ProductDetail = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/products/${product._id}/intent`,
+        `${url}/api/products/${product._id}/intent`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -165,7 +166,7 @@ const ProductDetail = () => {
       );
       if (response.data.success) {
         toast.success("Intent registered successfully!");
-        setProduct({ ...product, intentBy: currentUserId }); // Update local state
+        setProduct({ ...product, intentBy: currentUserId });
       } else {
         toast.error(response.data.message || "Failed to register intent");
       }
@@ -218,7 +219,7 @@ const ProductDetail = () => {
             <div className="main-image-container">
               {product.photos?.length > 0 ? (
                 <img
-                  src={`http://localhost:5000/uploads/${product.photos[activeImage]}`}
+                  src={`${url}/uploads/${product.photos[activeImage]}`}
                   alt={product.title}
                   className="main-product-image"
                   onError={(e) => e.target.src = "https://via.placeholder.com/400?text=No+Image"}
@@ -236,7 +237,7 @@ const ProductDetail = () => {
                     onClick={() => setActiveImage(index)}
                   >
                     <img
-                      src={`http://localhost:5000/uploads/${photo}`}
+                      src={`${url}/uploads/${photo}`}
                       alt={`${product.title} - ${index + 1}`}
                       onError={(e) => e.target.src = "https://via.placeholder.com/100?text=No+Image"}
                     />
@@ -333,7 +334,7 @@ const ProductDetail = () => {
                     src={
                       product.seller.profileImage.startsWith("http")
                         ? product.seller.profileImage
-                        : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+                        : `${url}/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
                     }
                     alt={product.seller.name}
                     onClick={() => setShowModal(true)}
@@ -383,7 +384,7 @@ const ProductDetail = () => {
                   <div className="position-relative">
                     {similarProduct.photos?.length > 0 ? (
                       <img
-                        src={`http://localhost:5000/uploads/${similarProduct.photos[0]}`}
+                        src={`${url}/uploads/${similarProduct.photos[0]}`}
                         className="card-img-top similar-product-image"
                         alt={similarProduct.title}
                         onError={(e) => e.target.src = "https://via.placeholder.com/200?text=No+Image"}
@@ -412,7 +413,7 @@ const ProductDetail = () => {
             src={
               product.seller.profileImage.startsWith("http")
                 ? product.seller.profileImage
-                : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+                : `${url}/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
             }
             alt={product.seller.name}
             style={{

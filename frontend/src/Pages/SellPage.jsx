@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -7,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useAuth } from "../Context/AuthContext";
 import "./SellPage.css";
 
+const url = process.env.REACT_APP_API_URL;
 const SellPage = () => {
   const { currentUser, getCurrentUser } = useAuth();
   const [formData, setFormData] = useState({
@@ -33,7 +33,7 @@ const SellPage = () => {
       if (currentUser) {
         try {
           const userData = await getCurrentUser();
-          // Use sellerUniversity from the user profile
+         
           setSellerCollege(userData?.sellerUniversity || "");
           if (!sellerCollege) {
             toast.warn("Please update your profile with a college!");
@@ -124,11 +124,11 @@ const SellPage = () => {
         formDataToSend.append("photos", file);
       });
     }
-    formDataToSend.append("location", sellerCollege); // Force location to seller's college
+    formDataToSend.append("location", sellerCollege); 
 
     try {
       console.log("Submitting form data...", Object.fromEntries(formDataToSend));
-      const response = await axios.post("http://localhost:5000/api/products", formDataToSend, {
+      const response = await axios.post(`${url}/api/products`, formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${localStorage.getItem("token")}`,

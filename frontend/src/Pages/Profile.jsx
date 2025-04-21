@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 
+const url = process.env.REACT_APP_API_URL;
 const Profile = ({ userId: propUserId }) => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const Profile = ({ userId: propUserId }) => {
       try {
         setLoading(true);
         console.log("Fetching profile with token:", localStorage.getItem("token"));
-        const response = await axios.get(`http://localhost:5000/api/auth/me`, {
+        const response = await axios.get(`${url}/api/auth/me`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const userData = response.data.user || response.data;
@@ -41,7 +42,7 @@ const Profile = ({ userId: propUserId }) => {
           sellerUniversity: userData.sellerUniversity || "",
           bio: userData.bio || "",
           phone: userData.phone || "",
-          profileImage: userData.profileImage || "", // This will now be the full URL
+          profileImage: userData.profileImage || "", 
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -55,7 +56,7 @@ const Profile = ({ userId: propUserId }) => {
     const effectiveUserId = propUserId || userId || currentUser._id;
     if (effectiveUserId && effectiveUserId !== currentUser._id) {
       console.log("Fetching profile for userId:", effectiveUserId);
-      // Add logic to fetch other user's profile if backend supports it
+      
     } else {
       fetchUserProfile();
     }
@@ -91,7 +92,7 @@ const Profile = ({ userId: propUserId }) => {
       }
 
       const response = await axios.put(
-        "http://localhost:5000/api/auth/me",
+        `${url}/api/auth/me`,
         formData,
         {
           headers: {
@@ -104,7 +105,7 @@ const Profile = ({ userId: propUserId }) => {
       if (response.data.success) {
         toast.success("Profile updated successfully!");
         setIsEditing(false);
-        const freshData = await axios.get("http://localhost:5000/api/auth/me", {
+        const freshData = await axios.get(`${url}/api/auth/me`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         const updatedUser = freshData.data.user || freshData.data;

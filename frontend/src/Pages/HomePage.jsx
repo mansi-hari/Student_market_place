@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -9,6 +7,7 @@ import CategoryCard from "../Components/CategoryCard";
 import HowItWorks from "../Components/HowItWorksCard";
 import "./HomePage.css";
 
+const url = process.env.REACT_APP_API_URL;
 const HomePage = () => {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -17,8 +16,8 @@ const HomePage = () => {
   const [error, setError] = useState(null);
   const [wishlist, setWishlist] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [showModal, setShowModal] = useState(false); // State for modal
-  const [selectedSellerImage, setSelectedSellerImage] = useState(null); // State for selected seller image
+  const [showModal, setShowModal] = useState(false); 
+  const [selectedSellerImage, setSelectedSellerImage] = useState(null); 
 
   const [categories, setCategories] = useState([
     {
@@ -72,7 +71,7 @@ const HomePage = () => {
         setLoading(true);
 
         // Fetch all products
-        const productsResponse = await axios.get("http://localhost:5000/api/products");
+        const productsResponse = await axios.get(`${url}/api/products`);
         console.log("Products fetched:", productsResponse.data);
 
         if (Array.isArray(productsResponse.data)) {
@@ -96,7 +95,7 @@ const HomePage = () => {
         }
 
         // Fetch featured products
-        const featuredResponse = await axios.get("http://localhost:5000/api/products/featured");
+        const featuredResponse = await axios.get(`${url}/api/products/featured`);
         if (Array.isArray(featuredResponse.data)) {
           setFeaturedProducts(featuredResponse.data);
         }
@@ -118,7 +117,7 @@ const HomePage = () => {
   // Fetch wishlist
   const fetchWishlist = async (token) => {
     try {
-      const response = await axios.get("http://localhost:5000/api/wishlist", {
+      const response = await axios.get(`${url}/api/wishlist`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (response.data.success) {
@@ -142,14 +141,14 @@ const HomePage = () => {
     const isInWishlist = wishlist.includes(product._id); // Check if in wishlist
     try {
       if (isInWishlist) {
-        await axios.delete(`http://localhost:5000/api/wishlist/${product._id}`, {
+        await axios.delete(`${url}/api/wishlist/${product._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setWishlist(wishlist.filter((id) => id !== product._id));
         toast.success(`${product.title} removed from wishlist`);
       } else {
         await axios.post(
-          `http://localhost:5000/api/wishlist/${product._id}`,
+          `${url}/api/wishlist/${product._id}`,
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -171,7 +170,7 @@ const HomePage = () => {
 
   // Navigate to product detail page on click
   const handleProductClick = (product) => {
-    navigate(`/product/${product._id}`); // Redirect to product detail page
+    navigate(`/product/${product._id}`); 
   };
 
   // Handle seller image click to open modal
@@ -234,7 +233,7 @@ const HomePage = () => {
                   <div className="featured-image-container">
                     {product.photos && product.photos.length > 0 ? (
                       <img
-                        src={`http://localhost:5000/uploads/${product.photos[0]}`}
+                        src={`${url}/uploads/${product.photos[0]}`}
                         alt={product.title}
                         className="cropped-image"
                         onError={(e) => {
@@ -263,7 +262,7 @@ const HomePage = () => {
                           src={
                             product.seller.profileImage.startsWith("http")
                               ? product.seller.profileImage
-                              : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+                              : `${url}/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
                           }
                           alt={product.seller.name}
                           className="seller-avatar"
@@ -272,7 +271,7 @@ const HomePage = () => {
                             handleSellerImageClick(
                               product.seller.profileImage.startsWith("http")
                                 ? product.seller.profileImage
-                                : `http://localhost:5000/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
+                                : `${url}/uploads/${product.seller.profileImage.split("/uploads/")[1] || product.seller.profileImage}`
                             );
                           }}
                           onError={(e) => {
